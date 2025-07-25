@@ -15,7 +15,8 @@ st.markdown("""
 
 # Sidebar – chọn chức năng chính
 st.sidebar.subheader("📂 Chọn chức năng")
-main_menu = st.sidebar.selectbox("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức ngược"])
+# Sử dụng st.radio để tạo các nút lựa chọn riêng biệt
+main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức ngược"])
 
 # Xử lý các lựa chọn từ menu chính
 if main_menu == "Trang chủ":
