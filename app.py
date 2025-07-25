@@ -72,7 +72,7 @@ elif main_menu == "Tính toán điện":
             st.success(f"Sụt áp ΔU ≈ {Udrop:.2f} V")
 
     elif sub_menu_tinh_toan == "Chọn tiết diện dây dẫn":
-        st.header("⚡ Chọn tiết diện dây dẫn theo sụt áp")
+        st.header("⚡ Chọn tiết diện dây dẫn")
 
         st.latex(r"S = \frac{2 \cdot \rho \cdot L \cdot I}{U \cdot (\Delta U\% / 100)}")
         st.markdown("""
