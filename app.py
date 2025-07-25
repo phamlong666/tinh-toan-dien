@@ -71,24 +71,13 @@ elif main_menu == "Tính toán điện":
         if st.button("Tính sụt áp"):
             st.success(f"Sụt áp ΔU ≈ {Udrop:.2f} V")
 
-    
     elif sub_menu_tinh_toan == "Chọn tiết diện dây dẫn":
-        st.header("⚡ Chọn tiết diện dây dẫn (tính theo sụt áp cho phép)")
-        P = st.number_input("Công suất tải (kW):", min_value=0.0)
-        U = st.number_input("Điện áp danh định (V):", min_value=0.0, value=220.0)
-        cos_phi = st.slider("Hệ số cosφ:", 0.1, 1.0, 0.85)
-        L = st.number_input("Chiều dài dây (m):", min_value=0.0, value=50.0)
-        deltaU_percent = st.number_input("Sụt áp cho phép (%):", min_value=1.0, value=4.0)
-        material = st.selectbox("Chất liệu dây dẫn:", ["Đồng", "Nhôm"])
-
-        if st.button("Tính tiết diện dây"):
-            I = P * 1000 / (U * cos_phi)
-            rho = 0.0175 if material == "Đồng" else 0.028
-            deltaU = U * deltaU_percent / 100
-            S = (2 * rho * L * I) / deltaU
-            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240]
-            closest_standard = min(standard_sizes, key=lambda x: abs(x - S))
-            st.success(f"Tiết diện tối thiểu S ≈ {S:.2f} mm² → Chọn chuẩn thương mại: {closest_standard} mm²")
+        st.header("⚡ Chọn tiết diện dây dẫn")
+        I = st.number_input("Dòng điện I (A):", min_value=0.0)
+        J = st.number_input("Mật độ dòng điện J (A/mm²):", min_value=1.0, value=4.0)
+        S = I / J
+        if st.button("Tính tiết diện"):
+            st.success(f"Tiết diện S tối thiểu ≈ {S:.2f} mm²")
 
     elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
@@ -118,18 +107,52 @@ elif main_menu == "Tính toán điện":
 
     elif sub_menu_tinh_toan == "Chọn thiết bị bảo vệ":
         st.header("🔌 Tính thiết bị bảo vệ (CB/MCCB)")
-        # Phân loại thiết bị
-        nhom = st.selectbox("Chọn nhóm thiết bị", ["Chọn nhóm", "Trung thế", "Hạ thế", "Hộ gia đình"])
+
+        nhom = st.selectbox("Chọn nhóm thiết bị", ["Chọn nhóm", "Trung thế (cấp 22–110kV)", "Hạ thế (phía 0.4kV)", "Hộ gia đình"])
 
         if nhom == "Chọn nhóm":
             st.warning("Vui lòng chọn nhóm thiết bị.")
-        else:
-            Itt = st.number_input("Dòng tải (A):", min_value=0.0, step=0.01, format="%.2f")
-            he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
-            In = Itt * he_so
-            if st.button("Tính In CB"):
-                st.success(f"Nên chọn CB có In ≥ {In:.0f} A")
 
+        elif nhom == "Trung thế (cấp 22–110kV)":
+            st.subheader("⚙️ Tính dòng điện trung thế (tham khảo)")
+            cap_dien_ap = st.selectbox("Cấp điện áp trung thế:", ["110 kV", "35 kV", "22 kV", "10 kV"])
+            cong_suat = st.selectbox("Công suất MBA (kVA):", [50, 75, 100, 160, 180, 250, 320, 400, 560, 1000])
+            U = 110000 if cap_dien_ap == "110 kV" else 35000 if cap_dien_ap == "35 kV" else 22000 if cap_dien_ap == "22 kV" else 10000
+            I = cong_suat * 1000 / (math.sqrt(3) * U)
+            he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
+            In = I * he_so
+
+            st.latex(r"I = rac{S 	imes 1000}{\sqrt{3} 	imes U}")
+            st.markdown("""
+            **Trong đó**:
+            - \( S \): Công suất MBA (kVA)
+            - \( U \): Cấp điện áp (V)
+            - \( I \): Dòng điện định mức (A)
+
+            **Mục đích**: Tính dòng điện để chọn thiết bị bảo vệ trung thế phù hợp.
+            """, unsafe_allow_html=True)
+
+            st.success(f"Dòng điện I ≈ {I:.2f} A → Nên chọn CB có In ≥ {In:.0f} A")
+
+        elif nhom == "Hạ thế (phía 0.4kV)":
+            st.subheader("⚙️ Tính dòng điện phía hạ áp 0.4kV")
+            cong_suat = st.selectbox("Công suất MBA (kVA):", [50, 75, 100, 160, 180, 250, 320, 400, 560, 1000])
+            U = 400
+            I = cong_suat * 1000 / (math.sqrt(3) * U)
+            he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
+            In = I * he_so
+
+            st.latex(r"I = rac{S 	imes 1000}{\sqrt{3} 	imes 400}")
+            st.markdown("""
+            **Trong đó**:
+            - \( S \): Công suất MBA (kVA)
+            - \( U = 400 \) V: Điện áp hạ áp
+            - \( I \): Dòng điện định mức phía hạ áp
+
+            **Mục đích**: Tính dòng điện phía hạ áp để lựa chọn CB/AB phù hợp lắp đặt tại tủ tổng.
+            """, unsafe_allow_html=True)
+
+            st.success(f"Dòng điện I ≈ {I:.2f} A → Nên chọn CB có In ≥ {In:.0f} A")
 elif main_menu == "Chuyển đổi đơn vị":
     st.header("🔄 Chuyển đổi đơn vị")
     chon = st.selectbox("Chuyển đổi loại:", ["BTU ➜ kW", "HP ➜ kW", "kVA ➜ kW"])
@@ -148,14 +171,7 @@ elif main_menu == "Chuyển đổi đơn vị":
 
 elif main_menu == "Công thức ngược":
     st.header("📐 Tính toán theo công thức ngược")
-    cong_thuc = st.selectbox("Tính ngược theo:", [
-        "ΔU & I → R",
-        "Ptt & I → R",
-        "ΔU & R → I",
-        "Ptt & R → I",
-        "ΔU%, L, I → S"
-    ])
-    if cong_thuc == "ΔU%, L, I → S": pass
+    cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
     if cong_thuc == "ΔU & I → R":
         u = st.number_input("ΔU (V):")
         i = st.number_input("I (A):")
@@ -180,18 +196,3 @@ elif main_menu == "Công thức ngược":
         i = math.sqrt(ptt / r) if r != 0 else 0
         if st.button("Tính I"):
             st.success(f"I ≈ {i:.3f} A")
-
-    elif cong_thuc == "ΔU%, L, I → S":
-        deltaU_percent = st.number_input("Sụt áp cho phép (%):", min_value=1.0, value=4.0)
-        L = st.number_input("Chiều dài tuyến (m):", min_value=0.0, value=50.0)
-        I = st.number_input("Dòng điện (A):", min_value=0.0)
-        material = st.selectbox("Chất liệu dây dẫn:", ["Đồng", "Nhôm"])
-        if st.button("Tính tiết diện S"):
-            U = 220  # Giả sử điện áp danh định để quy đổi ΔU%
-            rho = 0.0175 if material == "Đồng" else 0.028
-            deltaU = U * deltaU_percent / 100
-            S = (2 * rho * L * I) / deltaU
-            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240]
-            closest_standard = min(standard_sizes, key=lambda x: abs(x - S))
-            st.success(f"Tiết diện S ≈ {S:.2f} mm² → Gợi ý chọn gần nhất: {closest_standard} mm²")
-
