@@ -1,5 +1,5 @@
-# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức điện
-# Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
+# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức ngược
+# Mắt Nâu – EVNNPC Điện lực Định Hóa
 
 import streamlit as st
 import math
@@ -15,7 +15,7 @@ st.markdown("""
 
 # Sidebar – chọn chức năng chính
 st.sidebar.subheader("📂 Chọn chức năng")
-main_menu = st.sidebar.selectbox("", ["Trang chủ", "Tính toán điện", "Công cụ bổ trợ"])
+main_menu = st.sidebar.selectbox("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức ngược"])
 
 # Xử lý các lựa chọn từ menu chính
 if main_menu == "Trang chủ":
@@ -118,54 +118,46 @@ elif main_menu == "Tính toán điện":
             if st.button("Tính In CB"):
                 st.success(f"Nên chọn CB có In ≥ {In:.0f} A")
 
-elif main_menu == "Công cụ bổ trợ":
-    # Menu con cho các công cụ bổ trợ
-    sub_menu_cong_cu = st.sidebar.selectbox("Chọn công cụ:", [
-        "Chuyển đổi đơn vị",
-        "Công thức điện"
-    ])
+elif main_menu == "Chuyển đổi đơn vị":
+    st.header("🔄 Chuyển đổi đơn vị")
+    chon = st.selectbox("Chuyển đổi loại:", ["BTU ➜ kW", "HP ➜ kW", "kVA ➜ kW"])
+    value = st.number_input("Giá trị cần chuyển đổi:", min_value=0.0)
+    if chon == "BTU ➜ kW":
+        result = value / 3412.14
+    elif chon == "HP ➜ kW":
+        result = value * 0.7457
+    elif chon == "kVA ➜ kW":
+        cos = st.slider("Hệ số cosφ:", 0.1, 1.0, 0.8, key="cosva")
+        result = value * cos
+    else:
+        result = 0 # Default value if no conversion type is selected
+    if st.button("Chuyển đổi"):
+        st.success(f"Kết quả: ≈ {result:.2f} kW")
 
-    # Hiển thị nội dung dựa trên lựa chọn menu con
-    if sub_menu_cong_cu == "Chuyển đổi đơn vị":
-        st.header("🔄 Chuyển đổi đơn vị")
-        chon = st.selectbox("Chuyển đổi loại:", ["BTU ➜ kW", "HP ➜ kW", "kVA ➜ kW"])
-        value = st.number_input("Giá trị cần chuyển đổi:", min_value=0.0)
-        if chon == "BTU ➜ kW":
-            result = value / 3412.14
-        elif chon == "HP ➜ kW":
-            result = value * 0.7457
-        elif chon == "kVA ➜ kW":
-            cos = st.slider("Hệ số cosφ:", 0.1, 1.0, 0.8, key="cosva")
-            result = value * cos
-        else:
-            result = 0 # Default value if no conversion type is selected
-        if st.button("Chuyển đổi"):
-            st.success(f"Kết quả: ≈ {result:.2f} kW")
-
-    elif sub_menu_cong_cu == "Công thức điện":
-        st.header("📐 Tính toán theo công thức điện")
-        cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
-        if cong_thuc == "ΔU & I → R":
-            u = st.number_input("ΔU (V):")
-            i = st.number_input("I (A):")
-            r = u / i if i != 0 else 0
-            if st.button("Tính R"):
-                st.success(f"R ≈ {r:.3f} Ω")
-        elif cong_thuc == "Ptt & I → R":
-            ptt = st.number_input("Ptt (W):")
-            i = st.number_input("I (A):")
-            r = ptt / (i**2) if i != 0 else 0
-            if st.button("Tính R"):
-                st.success(f"R ≈ {r:.3f} Ω")
-        elif cong_thuc == "ΔU & R → I":
-            u = st.number_input("ΔU (V):")
-            r = st.number_input("R (Ω):")
-            i = u / r if r != 0 else 0
-            if st.button("Tính I"):
-                st.success(f"I ≈ {i:.3f} A")
-        elif cong_thuc == "Ptt & R → I":
-            ptt = st.number_input("Ptt (W):")
-            r = st.number_input("R (Ω):")
-            i = math.sqrt(ptt / r) if r != 0 else 0
-            if st.button("Tính I"):
-                st.success(f"I ≈ {i:.3f} A")
+elif main_menu == "Công thức ngược":
+    st.header("📐 Tính toán theo công thức ngược")
+    cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
+    if cong_thuc == "ΔU & I → R":
+        u = st.number_input("ΔU (V):")
+        i = st.number_input("I (A):")
+        r = u / i if i != 0 else 0
+        if st.button("Tính R"):
+            st.success(f"R ≈ {r:.3f} Ω")
+    elif cong_thuc == "Ptt & I → R":
+        ptt = st.number_input("Ptt (W):")
+        i = st.number_input("I (A):")
+        r = ptt / (i**2) if i != 0 else 0
+        if st.button("Tính R"):
+            st.success(f"R ≈ {r:.3f} Ω")
+    elif cong_thuc == "ΔU & R → I":
+        u = st.number_input("ΔU (V):")
+        r = st.number_input("R (Ω):")
+        i = u / r if r != 0 else 0
+        if st.button("Tính I"):
+            st.success(f"I ≈ {i:.3f} A")
+    elif cong_thuc == "Ptt & R → I":
+        ptt = st.number_input("Ptt (W):")
+        r = st.number_input("R (Ω):")
+        i = math.sqrt(ptt / r) if r != 0 else 0
+        if st.button("Tính I"):
+            st.success(f"I ≈ {i:.3f} A")
