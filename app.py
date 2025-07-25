@@ -72,12 +72,40 @@ elif main_menu == "Tính toán điện":
             st.success(f"Sụt áp ΔU ≈ {Udrop:.2f} V")
 
     elif sub_menu_tinh_toan == "Chọn tiết diện dây dẫn":
-        st.header("⚡ Chọn tiết diện dây dẫn")
-        I = st.number_input("Dòng điện I (A):", min_value=0.0)
-        J = st.number_input("Mật độ dòng điện J (A/mm²):", min_value=1.0, value=4.0)
-        S = I / J
+        st.header("⚡ Chọn tiết diện dây dẫn theo sụt áp")
+
+        st.latex(r"S = \frac{2 \cdot \rho \cdot L \cdot I}{U \cdot (\Delta U\% / 100)}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( S \): Tiết diện dây dẫn cần chọn (mm²)  
+        - \( \rho \): Điện trở suất của vật liệu dây (Ω·mm²/m)  
+        - \( L \): Chiều dài dây dẫn 1 chiều (m)  
+        - \( I \): Dòng điện tải (A)  
+        - \( U \): Điện áp danh định (V)  
+        - \( \Delta U\% \): Sụt áp cho phép (%)  
+
+        **Mục đích:**  
+        Tính tiết diện dây dẫn phù hợp với công suất tải, chiều dài và điều kiện sụt áp cho phép.  
+        Giúp chọn dây dẫn đúng kỹ thuật và đảm bảo an toàn vận hành.
+        """, unsafe_allow_html=True)
+
+        pha = st.radio("Loại điện:", ["1 pha", "3 pha"])
+        P = st.number_input("Công suất tải (kW):", min_value=0.0)
+        U = st.number_input("Điện áp danh định (V):", min_value=0.0, value=220.0)
+        cos_phi = st.slider("Hệ số công suất cosφ:", 0.1, 1.0, 0.85)
+        L = st.number_input("Chiều dài dây dẫn (m):", min_value=0.0)
+        deltaU_percent = st.number_input("Sụt áp cho phép (%):", min_value=1.0, value=4.0)
+        material = st.selectbox("Chất liệu dây dẫn:", ["Đồng", "Nhôm"])
+
         if st.button("Tính tiết diện"):
-            st.success(f"Tiết diện S tối thiểu ≈ {S:.2f} mm²")
+            I = P * 1000 / (U * cos_phi) if pha == "1 pha" else P * 1000 / (math.sqrt(3) * U * cos_phi)
+            rho = 0.0175 if material == "Đồng" else 0.028
+            deltaU = U * deltaU_percent / 100
+            S = (2 * rho * L * I) / deltaU
+            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240]
+            closest_standard = min(standard_sizes, key=lambda x: abs(x - S))
+            st.success(f"Tiết diện S tính được ≈ {S:.2f} mm²")
+            st.info(f"👉 Gợi ý chọn tiết diện chuẩn thương mại: **{closest_standard} mm²**")
 
     elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
