@@ -148,7 +148,13 @@ elif main_menu == "Chuyển đổi đơn vị":
 
 elif main_menu == "Công thức ngược":
     st.header("📐 Tính toán theo công thức ngược")
-    cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
+    cong_thuc = st.selectbox("Tính ngược theo:", [
+        "ΔU & I → R",
+        "Ptt & I → R",
+        "ΔU & R → I",
+        "Ptt & R → I",
+        "ΔU%, L, I → S"
+    ])
     if cong_thuc == "ΔU%, L, I → S": pass
     if cong_thuc == "ΔU & I → R":
         u = st.number_input("ΔU (V):")
