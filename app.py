@@ -71,13 +71,24 @@ elif main_menu == "Tính toán điện":
         if st.button("Tính sụt áp"):
             st.success(f"Sụt áp ΔU ≈ {Udrop:.2f} V")
 
+    
     elif sub_menu_tinh_toan == "Chọn tiết diện dây dẫn":
-        st.header("⚡ Chọn tiết diện dây dẫn")
-        I = st.number_input("Dòng điện I (A):", min_value=0.0)
-        J = st.number_input("Mật độ dòng điện J (A/mm²):", min_value=1.0, value=4.0)
-        S = I / J
-        if st.button("Tính tiết diện"):
-            st.success(f"Tiết diện S tối thiểu ≈ {S:.2f} mm²")
+        st.header("⚡ Chọn tiết diện dây dẫn (tính theo sụt áp cho phép)")
+        P = st.number_input("Công suất tải (kW):", min_value=0.0)
+        U = st.number_input("Điện áp danh định (V):", min_value=0.0, value=220.0)
+        cos_phi = st.slider("Hệ số cosφ:", 0.1, 1.0, 0.85)
+        L = st.number_input("Chiều dài dây (m):", min_value=0.0, value=50.0)
+        deltaU_percent = st.number_input("Sụt áp cho phép (%):", min_value=1.0, value=4.0)
+        material = st.selectbox("Chất liệu dây dẫn:", ["Đồng", "Nhôm"])
+
+        if st.button("Tính tiết diện dây"):
+            I = P * 1000 / (U * cos_phi)
+            rho = 0.0175 if material == "Đồng" else 0.028
+            deltaU = U * deltaU_percent / 100
+            S = (2 * rho * L * I) / deltaU
+            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240]
+            closest_standard = min(standard_sizes, key=lambda x: abs(x - S))
+            st.success(f"Tiết diện tối thiểu S ≈ {S:.2f} mm² → Chọn chuẩn thương mại: {closest_standard} mm²")
 
     elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
@@ -138,6 +149,7 @@ elif main_menu == "Chuyển đổi đơn vị":
 elif main_menu == "Công thức ngược":
     st.header("📐 Tính toán theo công thức ngược")
     cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
+    if cong_thuc == "ΔU%, L, I → S": pass
     if cong_thuc == "ΔU & I → R":
         u = st.number_input("ΔU (V):")
         i = st.number_input("I (A):")
@@ -162,3 +174,18 @@ elif main_menu == "Công thức ngược":
         i = math.sqrt(ptt / r) if r != 0 else 0
         if st.button("Tính I"):
             st.success(f"I ≈ {i:.3f} A")
+
+    elif cong_thuc == "ΔU%, L, I → S":
+        deltaU_percent = st.number_input("Sụt áp cho phép (%):", min_value=1.0, value=4.0)
+        L = st.number_input("Chiều dài tuyến (m):", min_value=0.0, value=50.0)
+        I = st.number_input("Dòng điện (A):", min_value=0.0)
+        material = st.selectbox("Chất liệu dây dẫn:", ["Đồng", "Nhôm"])
+        if st.button("Tính tiết diện S"):
+            U = 220  # Giả sử điện áp danh định để quy đổi ΔU%
+            rho = 0.0175 if material == "Đồng" else 0.028
+            deltaU = U * deltaU_percent / 100
+            S = (2 * rho * L * I) / deltaU
+            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240]
+            closest_standard = min(standard_sizes, key=lambda x: abs(x - S))
+            st.success(f"Tiết diện S ≈ {S:.2f} mm² → Gợi ý chọn gần nhất: {closest_standard} mm²")
+
