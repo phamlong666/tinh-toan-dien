@@ -7,11 +7,12 @@ from PIL import Image
 import pandas as pd
 import io
 from datetime import datetime
+import base64 # Import thư viện base64 để mã hóa PDF cho nút xem phiếu
 
 # Import các thành phần từ ReportLab để tạo PDF
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
@@ -131,7 +132,7 @@ elif main_menu == "Tính toán điện":
         U = st.number_input("Điện áp U (V):", min_value=0.0)
         cos_phi = st.slider("Hệ số cosφ:", 0.1, 1.0, 0.8)
         if st.button("Tính dòng điện"):
-            I = P * 1000 / (U * cos_phi) if pha == "1 pha" else P * 1000 / (math.sqrt(3) * U * cos_phi)
+            I = P * 1000 / (U * cos_phi) if U != 0 and cos_phi != 0 else 0
             st.success(f"Dòng điện I ≈ {I:.2f} A")
 
     elif sub_menu_tinh_toan == "Tính công suất (P)":
@@ -141,7 +142,9 @@ elif main_menu == "Tính toán điện":
         U = st.number_input("Điện áp U (V):", min_value=0.0, key="u2")
         cos_phi = st.slider("Hệ số cosφ:", 0.1, 1.0, 0.8, key="c2")
         if st.button("Tính công suất"):
-            P = U * I * cos_phi / 1000 if pha == "1 pha" else math.sqrt(3) * U * I * cos_phi / 1000
+            P = U * I * cos_phi / 1000 if U != 0 and I != 0 and cos_phi != 0 else 0
+            if pha == "3 pha":
+                P = math.sqrt(3) * U * I * cos_phi / 1000
             st.success(f"Công suất P ≈ {P:.2f} kW")
 
     elif sub_menu_tinh_toan == "Tính sụt áp (ΔU)":
@@ -185,9 +188,9 @@ elif main_menu == "Tính toán điện":
         customer_address = st.text_input("Địa chỉ:", value="Thị trấn Chợ Chu, Định Hóa, Thái Nguyên")
         customer_phone = st.text_input("Số điện thoại khách hàng:", value="0987 654 321")
         
-        # Lấy thời gian thực
-        current_time = datetime.now().strftime("%H:%M ngày %d/%m/%Y")
-        st.markdown(f"**Thời gian lập phiếu:** {current_time}")
+        # Lấy thời gian thực (chỉ ngày, tháng, năm)
+        current_date = datetime.now().strftime("Ngày %d tháng %m năm %Y")
+        st.markdown(f"**Thời gian lập phiếu:** {current_date}")
 
         pha = st.radio("Loại điện:", ["1 pha", "3 pha"])
         P = st.number_input("Công suất tải (kW):", min_value=0.0)
@@ -302,7 +305,7 @@ elif main_menu == "Tính toán điện":
                 story.append(Paragraph(f"<b>Khách hàng:</b> {customer_name}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Địa chỉ:</b> {customer_address}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Điện thoại khách hàng:</b> {customer_phone}", styles['NormalStyle']))
-                story.append(Paragraph(f"<b>Thời gian lập phiếu:</b> {current_time}", styles['NormalStyle']))
+                story.append(Paragraph(f"<b>Thời gian lập phiếu:</b> {current_date}", styles['NormalStyle']))
                 story.append(Spacer(1, 0.2 * inch))
 
                 # Thông số đầu vào
@@ -350,56 +353,34 @@ elif main_menu == "Tính toán điện":
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
                 ]))
                 story.append(output_table)
+                story.append(Spacer(1, 0.5 * inch)) # Thêm khoảng trống trước chữ ký
+                
+                # Chữ ký
+                signature_data = [
+                    [Paragraph("<b>NGƯỜI TÍNH TOÁN</b>", styles['TableCellBoldStyle']), Paragraph("<b>KHÁCH HÀNG</b>", styles['TableCellBoldStyle'])],
+                    [Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle']), Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle'])],
+                    [Spacer(1, 0.8 * inch), Spacer(1, 0.8 * inch)], # Khoảng trống cho chữ ký
+                    [Paragraph(f"<b>{calculator_name}</b>", styles['TableCellBoldStyle']), Paragraph(f"<b>{customer_name}</b>", styles['TableCellBoldStyle'])]
+                ]
+                signature_table = Table(signature_data, colWidths=[2.75*inch, 2.75*inch])
+                signature_table.setStyle(TableStyle([
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('FONTNAME', (0,0), (-1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
+                    ('FONTSIZE', (0,0), (-1,-1), 10),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+                    ('TOPPADDING', (0,0), (-1,-1), 2),
+                ]))
+                story.append(signature_table)
                 story.append(Spacer(1, 0.2 * inch))
-                
-                # Chèn hình ảnh bảng tra vào PDF
-                story.append(Paragraph("<b>4. BẢNG TRA THAM KHẢO</b>", styles['Heading2Style']))
-                
-                # Chèn bảng tra dây Đồng
-                try:
-                    img_copper_path = "cadivi_cho bảng tra dây đồng.jpg"
-                    img_copper = Image.open(img_copper_path)
-                    # Resize ảnh để vừa trang A4 (khoảng 6 inch chiều rộng)
-                    aspect = img_copper.width / float(img_copper.height)
-                    img_width = 6 * inch
-                    img_height = img_width / aspect
-                    story.append(Paragraph("<b>Bảng tra dây dẫn CADIVI (Dây Đồng):</b>", styles['NormalStyle']))
-                    story.append(Image(img_copper_path, width=img_width, height=img_height))
-                    story.append(Spacer(1, 0.1 * inch))
-                except FileNotFoundError:
-                    story.append(Paragraph(f"<i>Không tìm thấy ảnh: {img_copper_path}</i>", styles['NormalStyle']))
-                except Exception as e:
-                    story.append(Paragraph(f"<i>Lỗi tải ảnh dây đồng: {e}</i>", styles['NormalStyle']))
-
-                # Chèn bảng tra dây Nhôm
-                try:
-                    img_aluminum_path = "cadivi_cho bảng tra dây nhôm.jpg"
-                    img_aluminum = Image.open(img_aluminum_path)
-                    # Resize ảnh để vừa trang A4 (khoảng 6 inch chiều rộng)
-                    aspect = img_aluminum.width / float(img_aluminum.height)
-                    img_width = 6 * inch
-                    img_height = img_width / aspect
-                    story.append(Paragraph("<b>Bảng tra dây dẫn CADIVI (Dây Nhôm):</b>", styles['NormalStyle']))
-                    story.append(Image(img_aluminum_path, width=img_width, height=img_height))
-                    story.append(Spacer(1, 0.1 * inch))
-                except FileNotFoundError:
-                    story.append(Paragraph(f"<i>Không tìm thấy ảnh: {img_aluminum_path}</i>", styles['NormalStyle']))
-                except Exception as e:
-                    story.append(Paragraph(f"<i>Lỗi tải ảnh dây nhôm: {e}</i>", styles['NormalStyle']))
 
 
                 doc.build(story)
                 pdf_bytes = buffer.getvalue()
                 buffer.close()
 
-                st.download_button(
-                    label="Xuất PDF",
-                    data=pdf_bytes,
-                    file_name=f"Phieu_tinh_toan_day_cap_dien_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                    mime="application/pdf",
-                    help="Tải về phiếu tính toán dưới dạng PDF"
-                )
-            # --- Kết thúc phần tạo và xuất PDF ---
+                # Lưu PDF bytes vào session state
+                st.session_state['pdf_bytes'] = pdf_bytes
+                st.session_state['pdf_filename'] = f"Phieu_tinh_toan_day_cap_dien_{datetime.now().strftime('%Y%m%d')}.pdf"
 
             # Hiển thị bảng tra CADIVI cho dây Đồng (vẫn dùng ảnh vì trực quan)
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
@@ -422,7 +403,53 @@ elif main_menu == "Tính toán điện":
                 st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây nhôm: {e}")
-    
+        
+        # --- Các nút PDF riêng biệt ---
+        if 'pdf_bytes' in st.session_state and st.session_state['pdf_bytes']:
+            col_pdf1, col_pdf2 = st.columns(2)
+            with col_pdf1:
+                st.download_button(
+                    label="Xuất PDF",
+                    data=st.session_state['pdf_bytes'],
+                    file_name=st.session_state['pdf_filename'],
+                    mime="application/pdf",
+                    help="Tải về phiếu tính toán dưới dạng PDF"
+                )
+            with col_pdf2:
+                # Nút "Xem phiếu" sẽ mở PDF trong tab mới
+                # Sử dụng base64 để nhúng PDF vào data URI cho thẻ <a>
+                pdf_base64 = base64.b64encode(st.session_state['pdf_bytes']).decode('utf-8')
+                pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="700" height="1000" type="application/pdf"></iframe>'
+                
+                # Để mở trong tab mới, cần một nút riêng và dùng st.markdown với HTML
+                # Tuy nhiên, Streamlit không cho phép trực tiếp mở tab mới từ st.button mà không tải về
+                # Cách tốt nhất là dùng download_button và hướng dẫn người dùng mở file đã tải
+                # Hoặc, tạo một nút và khi click, hiển thị iframe, nhưng iframe không mở tab mới
+                
+                # Giải pháp thay thế: Tạo một liên kết ẩn và click nó bằng JavaScript
+                # Đây là một workaround, không phải cách native của Streamlit
+                st.markdown(
+                    f"""
+                    <a href="data:application/pdf;base64,{pdf_base64}" download="{st.session_state['pdf_filename']}" target="_blank">
+                        <button style="
+                            background-color: #4CAF50; /* Green */
+                            border: none;
+                            color: white;
+                            padding: 10px 24px;
+                            text-align: center;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-size: 16px;
+                            margin: 4px 2px;
+                            cursor: pointer;
+                            border-radius: 8px;
+                        ">Xem phiếu</button>
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.warning("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt.")
+
     elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
         U = st.number_input("Điện áp danh định (V):", min_value=0.0)
