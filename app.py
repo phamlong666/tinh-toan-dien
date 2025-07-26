@@ -159,7 +159,7 @@ elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
             he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
             In = I * he_so
 
-            st.latex(r"I = rac{S 	imes 1000}{\sqrt{3} 	imes U}")
+            st.latex(r"I = rac{S     imes 1000}{\sqrt{3}     imes U}")
             st.markdown("""
             **Trong đó**:
             - \( S \): Công suất MBA (kVA)
@@ -179,7 +179,7 @@ elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
             he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
             In = I * he_so
 
-            st.latex(r"I = rac{S 	imes 1000}{\sqrt{3} 	imes 400}")
+            st.latex(r"I = rac{S     imes 1000}{\sqrt{3}     imes 400}")
             st.markdown("""
             **Trong đó**:
             - \( S \): Công suất MBA (kVA)
