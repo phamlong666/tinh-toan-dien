@@ -108,6 +108,9 @@ elif main_menu == "Tính toán điện":
             
             # Tính tiết diện S
             S = (2 * rho * L * I) / deltaU
+
+            # Hiển thị dòng điện tính toán được
+            st.info(f"⚡ Dòng điện tính toán được I ≈ {I:.2f} A")
             st.success(f"🔢 Tiết diện S tính được ≈ {S:.2f} mm²")
 
             standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400]
