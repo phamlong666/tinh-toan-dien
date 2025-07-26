@@ -71,7 +71,6 @@ elif main_menu == "Tính toán điện":
         if st.button("Tính sụt áp"):
             st.success(f"Sụt áp ΔU ≈ {Udrop:.2f} V")
 
-    
     elif sub_menu_tinh_toan == "Chọn tiết diện dây dẫn":
         st.header("⚡ Chọn tiết diện dây dẫn")
 
@@ -85,8 +84,7 @@ elif main_menu == "Tính toán điện":
         - \( U \): Điện áp danh định (V)  
         - \( \Delta U\% \): Sụt áp cho phép (%)  
 
-        **Mục đích:**  
-        Tính tiết diện dây dẫn phù hợp với công suất tải, chiều dài và điều kiện sụt áp cho phép.  
+        **Mục đích:** Tính tiết diện dây dẫn phù hợp với công suất tải, chiều dài và điều kiện sụt áp cho phép.  
         Giúp chọn dây dẫn đúng kỹ thuật và đảm bảo an toàn vận hành.
         """, unsafe_allow_html=True)
 
@@ -116,7 +114,8 @@ elif main_menu == "Tính toán điện":
             # Hiển thị bảng tra CADIVI
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI:**")
             st.image("cadivi_table.jpg", caption="Bảng tra dây dẫn CADIVI", use_column_width=True)
-elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
+    
+    elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
         U = st.number_input("Điện áp danh định (V):", min_value=0.0)
         I = st.number_input("Dòng điện (A):", min_value=0.0)
@@ -159,7 +158,7 @@ elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
             he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
             In = I * he_so
 
-            st.latex(r"I = rac{S     imes 1000}{\sqrt{3}     imes U}")
+            st.latex(r"I = \frac{S \times 1000}{\sqrt{3} \times U}")
             st.markdown("""
             **Trong đó**:
             - \( S \): Công suất MBA (kVA)
@@ -179,7 +178,7 @@ elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
             he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
             In = I * he_so
 
-            st.latex(r"I = rac{S     imes 1000}{\sqrt{3}     imes 400}")
+            st.latex(r"I = \frac{S \times 1000}{\sqrt{3} \times 400}")
             st.markdown("""
             **Trong đó**:
             - \( S \): Công suất MBA (kVA)
