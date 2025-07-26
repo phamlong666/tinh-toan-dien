@@ -1,5 +1,5 @@
 # app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức ngược
-# Mắt Nâu – EVNNPC Điện lực Định Hóa
+# Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
 
 import streamlit as st
 import math
@@ -168,15 +168,15 @@ elif main_menu == "Tính toán điện":
 
         # Thêm các trường nhập liệu mới cho Người tính toán
         st.subheader("Thông tin Người tính toán")
-        calculator_name_sd = st.text_input("Họ và tên:", value="Mắt Nâu", key="calc_name_sd")
-        calculator_title_sd = st.text_input("Chức danh:", value="Kỹ sư điện", key="calc_title_sd")
-        calculator_phone_sd = st.text_input("Số điện thoại:", value="0123 456 789", key="calc_phone_sd")
+        calculator_name_sd = st.text_input("Họ và tên:", value="Hà Thị Lê", key="calc_name_sd")
+        calculator_title_sd = st.text_input("Chức danh:", value="Tổ trưởng tổ KDDV", key="calc_title_sd")
+        calculator_phone_sd = st.text_input("Số điện thoại:", value="0978578777", key="calc_phone_sd")
 
         # Thêm các trường nhập liệu mới cho Khách hàng
         st.subheader("Thông tin Khách hàng")
-        customer_name_sd = st.text_input("Tên khách hàng:", value="Điện lực Định Hóa", key="cust_name_sd")
-        customer_address_sd = st.text_input("Địa chỉ:", value="Thị trấn Chợ Chu, Định Hóa, Thái Nguyên", key="cust_address_sd")
-        customer_phone_sd = st.text_input("Số điện thoại khách hàng:", value="0987 654 321", key="cust_phone_sd")
+        customer_name_sd = st.text_input("Tên khách hàng:", value="Phạm Hồng Long", key="cust_name_sd")
+        customer_address_sd = st.text_input("Địa chỉ:", value="xã Định Hóa, tỉnh Thái Nguyên", key="cust_address_sd")
+        customer_phone_sd = st.text_input("Số điện thoại khách hàng:", value="0968552888", key="cust_phone_sd")
         
         # Lấy thời gian thực (chỉ ngày, tháng, năm)
         current_date_sd = datetime.now().strftime("Ngày %d tháng %m năm %Y")
@@ -411,15 +411,15 @@ elif main_menu == "Tính toán điện":
 
         # Thêm các trường nhập liệu mới cho Người tính toán
         st.subheader("Thông tin Người tính toán")
-        calculator_name = st.text_input("Họ và tên:", value="Mắt Nâu")
-        calculator_title = st.text_input("Chức danh:", value="Kỹ sư điện")
-        calculator_phone = st.text_input("Số điện thoại:", value="0123 456 789")
+        calculator_name = st.text_input("Họ và tên:", value="Hà Thị Lê")
+        calculator_title = st.text_input("Chức danh:", value="Tổ trưởng tổ KDDV")
+        calculator_phone = st.text_input("Số điện thoại:", value="0978578777")
 
         # Thêm các trường nhập liệu mới cho Khách hàng
         st.subheader("Thông tin Khách hàng")
-        customer_name = st.text_input("Tên khách hàng:", value="Điện lực Định Hóa")
-        customer_address = st.text_input("Địa chỉ:", value="Thị trấn Chợ Chu, Định Hóa, Thái Nguyên")
-        customer_phone = st.text_input("Số điện thoại khách hàng:", value="0987 654 321")
+        customer_name = st.text_input("Tên khách hàng:", value="Phạm Hồng Long")
+        customer_address = st.text_input("Địa chỉ:", value="xã Định Hóa,tỉnh Thái Nguyên")
+        customer_phone = st.text_input("Số điện thoại khách hàng:", value="0968552888")
         
         # Lấy thời gian thực (chỉ ngày, tháng, năm)
         current_date = datetime.now().strftime("Ngày %d tháng %m năm %Y")
