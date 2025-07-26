@@ -97,13 +97,20 @@ elif main_menu == "Tính toán điện":
         material = st.selectbox("Chất liệu dây dẫn:", ["Đồng", "Nhôm"])
 
         if st.button("Tính tiết diện"):
+            # Tính dòng điện I
             I = P * 1000 / (U * cos_phi) if pha == "1 pha" else P * 1000 / (math.sqrt(3) * U * cos_phi)
+            
+            # Điện trở suất
             rho = 0.0175 if material == "Đồng" else 0.028
+            
+            # Sụt áp cho phép (ΔU)
             deltaU = U * deltaU_percent / 100
+            
+            # Tính tiết diện S
             S = (2 * rho * L * I) / deltaU
             st.success(f"🔢 Tiết diện S tính được ≈ {S:.2f} mm²")
 
-            standard_sizes = [1.5, 2.5, 4, 6, 10, 11, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400]
+            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400]
             suggested_size = next((size for size in standard_sizes if size >= S), None)
 
             if suggested_size:
@@ -111,9 +118,27 @@ elif main_menu == "Tính toán điện":
             else:
                 st.error("❌ Không có tiết diện thương mại phù hợp. Vui lòng kiểm tra lại điều kiện tính toán.")
 
-            # Hiển thị bảng tra CADIVI
-            st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI:**")
-            st.image("cadivi_table.jpg", caption="Bảng tra dây dẫn CADIVI", use_column_width=True)
+            # Hiển thị bảng tra CADIVI cho dây Đồng
+            st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
+            try:
+                # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
+                with open("cadivi_cho bảng tra dây đồng.jpg", "rb") as f:
+                    st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Đồng)", use_container_width=True)
+            except FileNotFoundError:
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+            except Exception as e:
+                st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây đồng: {e}")
+
+            # Hiển thị bảng tra CADIVI cho dây Nhôm
+            st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
+            try:
+                # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
+                with open("cadivi_cho bảng tra dây nhôm.jpg", "rb") as f:
+                    st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Nhôm)", use_container_width=True)
+            except FileNotFoundError:
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+            except Exception as e:
+                st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây nhôm: {e}")
     
     elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
