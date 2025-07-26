@@ -1,4 +1,5 @@
-# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức ngược
+# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức điện
+
 # Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
 
 import streamlit as st
@@ -46,7 +47,7 @@ st.markdown("""
 # Sidebar – chọn chức năng chính
 st.sidebar.subheader("📂 Chọn chức năng")
 # Sử dụng st.radio để tạo các nút lựa chọn riêng biệt
-main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức ngược"])
+main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức điện"])
 
 # Hàm để tải dữ liệu bảng tra từ file Excel
 @st.cache_data # Sử dụng cache để không phải đọc lại file mỗi lần tương tác
@@ -769,8 +770,8 @@ elif main_menu == "Chuyển đổi đơn vị":
     if st.button("Chuyển đổi"):
         st.success(f"Kết quả: ≈ {result:.2f} kW")
 
-elif main_menu == "Công thức ngược":
-    st.header("📐 Tính toán theo công thức ngược")
+elif main_menu == "Công thức điện":
+    st.header("📐 Tính toán theo công thức điện")
     cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
     if cong_thuc == "ΔU & I → R":
         u = st.number_input("ΔU (V):")
