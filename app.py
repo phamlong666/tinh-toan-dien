@@ -31,41 +31,49 @@ def load_cable_data(copper_file_path, aluminum_file_path):
     copper_capacities = {}
     aluminum_capacities = {}
     
-    try:
-        # Đọc dữ liệu cho dây Đồng
-        copper_df = pd.read_excel(copper_file_path) # Không cần sheet_name nếu chỉ có 1 sheet hoặc sheet đầu tiên
-        # Giả sử cột đầu tiên là Tiết diện, cột thứ ba là Khả năng chịu tải đi trong ống (an toàn hơn)
-        copper_capacities = dict(zip(copper_df.iloc[:, 0], copper_df.iloc[:, 2]))
-    except FileNotFoundError:
-        st.error(f"❌ Không tìm thấy file Excel '{copper_file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
-    except Exception as e:
-        # Kiểm tra nếu lỗi là do thiếu openpyxl
-        if "No module named 'openpyxl'" in str(e) or "Missing optional dependency 'openpyxl'" in str(e):
-            st.error(f"❌ Lỗi: Thiếu thư viện 'openpyxl' để đọc file Excel dây Đồng. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
-        else:
-            st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Đồng: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+    # Hàm trợ giúp để đọc từng file Excel và xử lý lỗi
+    def read_excel_file(file_path, material_type):
+        try:
+            df = pd.read_excel(file_path)
+            
+            # Kiểm tra số lượng cột tối thiểu
+            if df.shape[1] < 3:
+                st.error(f"❌ Lỗi cấu trúc file Excel {material_type}: File '{file_path}' cần ít nhất 3 cột (Tiết diện, Khả năng chịu tải không khí, Khả năng chịu tải trong ống).")
+                return {}
+            
+            # Kiểm tra dữ liệu cột Tiết diện và Khả năng chịu tải có phải là số không
+            # Lấy dữ liệu từ cột 1 (index 0) và cột 3 (index 2)
+            col_sizes = df.iloc[:, 0]
+            col_capacities = df.iloc[:, 2]
 
-    try:
-        # Đọc dữ liệu cho dây Nhôm
-        aluminum_df = pd.read_excel(aluminum_file_path) # Không cần sheet_name nếu chỉ có 1 sheet hoặc sheet đầu tiên
-        # Giả sử cột đầu tiên là Tiết diện, cột thứ ba là Khả năng chịu tải đi trong ống (an toàn hơn)
-        aluminum_capacities = dict(zip(aluminum_df.iloc[:, 0], aluminum_df.iloc[:, 2]))
-    except FileNotFoundError:
-        st.error(f"❌ Không tìm thấy file Excel '{aluminum_file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
-    except Exception as e:
-        # Kiểm tra nếu lỗi là do thiếu openpyxl
-        if "No module named 'openpyxl'" in str(e) or "Missing optional dependency 'openpyxl'" in str(e):
-            st.error(f"❌ Lỗi: Thiếu thư viện 'openpyxl' để đọc file Excel dây Nhôm. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
-        else:
-            st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Nhôm: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+            if not pd.api.types.is_numeric_dtype(col_sizes) or not pd.api.types.is_numeric_dtype(col_capacities):
+                st.error(f"❌ Lỗi dữ liệu file Excel {material_type}: Cột tiết diện (cột 1) hoặc cột khả năng chịu tải trong ống (cột 3) trong file '{file_path}' chứa dữ liệu không phải số. Vui lòng kiểm tra lại.")
+                return {}
+
+            # Chuyển DataFrame thành dictionary cho dễ tra cứu
+            # Giả sử cột đầu tiên là Tiết diện, cột thứ ba là Khả năng chịu tải đi trong ống (an toàn hơn)
+            return dict(zip(col_sizes, col_capacities))
+        except FileNotFoundError:
+            st.error(f"❌ Không tìm thấy file Excel '{file_path}' cho dây {material_type}. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
+            return {}
+        except Exception as e:
+            if "No module named 'openpyxl'" in str(e) or "Missing optional dependency 'openpyxl'" in str(e):
+                st.error(f"❌ Lỗi: Thiếu thư viện 'openpyxl' để đọc file Excel dây {material_type}. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
+            else:
+                st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây {material_type}: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+            return {}
+
+    copper_capacities = read_excel_file(copper_file_path, "Đồng")
+    aluminum_capacities = read_excel_file(aluminum_file_path, "Nhôm")
         
     return copper_capacities, aluminum_capacities
 
 # Tải dữ liệu bảng tra khi ứng dụng khởi động
 # Đảm bảo tên file Excel là chính xác và nằm cùng thư mục với app.py
+# Đã đổi tên file để tránh lỗi ký tự đặc biệt/khoảng trắng
 copper_capacities, aluminum_capacities = load_cable_data(
-    'cadivi_cho bảng tra dây đồng.xlsx', 
-    'cadivi_cho bảng tra dây nhôm.xlsx'
+    'cadivi_dong.xlsx', # Tên file mới
+    'cadivi_nhom.xlsx'  # Tên file mới
 )
 
 
@@ -182,7 +190,9 @@ elif main_menu == "Tính toán điện":
 
                 for size in available_sizes:
                     # Kiểm tra cả hai điều kiện: tiết diện đủ lớn theo sụt áp VÀ khả năng chịu tải đủ lớn theo dòng điện
-                    if size >= S and current_capacities.get(size, 0) >= I:
+                    # Đảm bảo giá trị từ Excel là số để so sánh
+                    capacity = current_capacities.get(size, 0)
+                    if isinstance(capacity, (int, float)) and size >= S and capacity >= I:
                         suggested_size = size
                         break # Đã tìm thấy tiết diện nhỏ nhất phù hợp, thoát vòng lặp
 
