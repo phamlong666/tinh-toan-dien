@@ -184,9 +184,9 @@ elif main_menu == "Tính toán điện":
 
         # Thêm các trường nhập liệu mới cho Khách hàng
         st.subheader("Thông tin Khách hàng")
-        customer_name = st.text_input("Tên khách hàng:", value="Phạm Hồng Long")
-        customer_address = st.text_input("Địa chỉ:", value="xã Định Hóa,tỉnh Thái Nguyên")
-        customer_phone = st.text_input("Số điện thoại khách hàng:", value="0968552888")
+        customer_name = st.text_input("Tên khách hàng:", value="Điện lực Định Hóa")
+        customer_address = st.text_input("Địa chỉ:", value="Thị trấn Chợ Chu, Định Hóa, Thái Nguyên")
+        customer_phone = st.text_input("Số điện thoại khách hàng:", value="0987 654 321")
         
         # Lấy thời gian thực (chỉ ngày, tháng, năm)
         current_date = datetime.now().strftime("Ngày %d tháng %m năm %Y")
@@ -383,7 +383,10 @@ elif main_menu == "Tính toán điện":
                 st.session_state['pdf_filename'] = f"Phieu_tinh_toan_day_cap_dien_{datetime.now().strftime('%Y%m%d')}.pdf"
 
             # --- Các nút PDF riêng biệt ---
+            # Chỉ hiển thị các nút nếu có PDF bytes trong session state (tức là đã tính toán thành công)
             if 'pdf_bytes' in st.session_state and st.session_state['pdf_bytes']:
+                st.markdown("---") # Đường phân cách
+                st.subheader("Tùy chọn xuất phiếu")
                 col_pdf1, col_pdf2 = st.columns(2)
                 with col_pdf1:
                     st.download_button(
@@ -395,16 +398,15 @@ elif main_menu == "Tính toán điện":
                     )
                 with col_pdf2:
                     # Nút "Xem phiếu" sẽ mở PDF trong tab mới
-                    # Sử dụng base64 để nhúng PDF vào data URI cho thẻ <a>
                     pdf_base64 = base64.b64encode(st.session_state['pdf_bytes']).decode('utf-8')
                     
-                    # Để mở trong tab mới mà không tải xuống, chúng ta loại bỏ thuộc tính 'download'
-                    # và sử dụng target="_blank"
+                    # Sử dụng st.markdown với thẻ <a> để mở trong tab mới mà không tải xuống
+                    # Lưu ý: Hành vi này có thể khác nhau tùy trình duyệt và cài đặt bảo mật
                     st.markdown(
                         f"""
-                        <a href="data:application/pdf;base64,{pdf_base64}" target="_blank">
+                        <a href="data:application/pdf;base64,{pdf_base64}" target="_blank" style="text-decoration: none;">
                             <button style="
-                                background-color: #4CAF50; /* Green */
+                                background-color: #007bff; /* Blue */
                                 border: none;
                                 color: white;
                                 padding: 10px 24px;
@@ -420,7 +422,7 @@ elif main_menu == "Tính toán điện":
                         """,
                         unsafe_allow_html=True
                     )
-                    st.warning("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt.")
+                    st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
 
             # Hiển thị bảng tra CADIVI cho dây Đồng (vẫn dùng ảnh vì trực quan)
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
