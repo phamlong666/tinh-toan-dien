@@ -4,6 +4,7 @@
 import streamlit as st
 import math
 from PIL import Image
+import pandas as pd # Import thư viện pandas
 
 # Thiết lập cấu hình trang
 st.set_page_config(page_title="Tính Toán Điện – Đội quản lý Điện lực khu vực Định Hóa", page_icon="⚡", layout="wide")
@@ -17,6 +18,33 @@ st.markdown("""
 st.sidebar.subheader("📂 Chọn chức năng")
 # Sử dụng st.radio để tạo các nút lựa chọn riêng biệt
 main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức ngược"])
+
+# Hàm để tải dữ liệu bảng tra từ file Excel
+@st.cache_data # Sử dụng cache để không phải đọc lại file mỗi lần tương tác
+def load_cable_data(file_path):
+    try:
+        # Đọc sheet 'Copper' cho dây Đồng
+        copper_df = pd.read_excel(file_path, sheet_name='Copper')
+        # Đọc sheet 'Aluminum' cho dây Nhôm
+        aluminum_df = pd.read_excel(file_path, sheet_name='Aluminum')
+
+        # Chuyển DataFrame thành dictionary cho dễ tra cứu
+        # Giả sử cột đầu tiên là Tiết diện, cột thứ ba là Khả năng chịu tải đi trong ống (an toàn hơn)
+        copper_capacities = dict(zip(copper_df.iloc[:, 0], copper_df.iloc[:, 2]))
+        aluminum_capacities = dict(zip(aluminum_df.iloc[:, 0], aluminum_df.iloc[:, 2]))
+        
+        return copper_capacities, aluminum_capacities
+    except FileNotFoundError:
+        st.error(f"❌ Không tìm thấy file Excel '{file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
+        return {}, {}
+    except Exception as e:
+        st.error(f"❌ Có lỗi xảy ra khi đọc file Excel: {e}. Vui lòng kiểm tra định dạng file và tên sheet (Copper, Aluminum).")
+        return {}, {}
+
+# Tải dữ liệu bảng tra khi ứng dụng khởi động
+# Đảm bảo tên file Excel là 'cable_data.xlsx' và nằm cùng thư mục
+copper_capacities, aluminum_capacities = load_cable_data('cable_data.xlsx')
+
 
 # Xử lý các lựa chọn từ menu chính
 if main_menu == "Trang chủ":
@@ -106,22 +134,37 @@ elif main_menu == "Tính toán điện":
             # Sụt áp cho phép (ΔU)
             deltaU = U * deltaU_percent / 100
             
-            # Tính tiết diện S
+            # Tính tiết diện S (dựa trên sụt áp)
             S = (2 * rho * L * I) / deltaU
 
             # Hiển thị dòng điện tính toán được
             st.info(f"⚡ Dòng điện tính toán được I ≈ {I:.2f} A")
-            st.success(f"🔢 Tiết diện S tính được ≈ {S:.2f} mm²")
+            st.success(f"🔢 Tiết diện S tối thiểu theo sụt áp ≈ {S:.2f} mm²")
 
-            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400]
-            suggested_size = next((size for size in standard_sizes if size >= S), None)
+            # Chọn bảng khả năng chịu tải phù hợp từ dữ liệu Excel đã tải
+            if material == "Đồng":
+                current_capacities = copper_capacities
+            else: # material == "Nhôm"
+                current_capacities = aluminum_capacities
+
+            # Tìm tiết diện chuẩn nhỏ nhất thỏa mãn cả sụt áp và khả năng chịu tải
+            suggested_size = None
+            # Sắp xếp các tiết diện có sẵn để tìm ra tiết diện nhỏ nhất phù hợp
+            # Lấy keys (tiết diện) từ dictionary và sắp xếp
+            available_sizes = sorted(current_capacities.keys())
+
+            for size in available_sizes:
+                # Kiểm tra cả hai điều kiện: tiết diện đủ lớn theo sụt áp VÀ khả năng chịu tải đủ lớn theo dòng điện
+                if size >= S and current_capacities.get(size, 0) >= I:
+                    suggested_size = size
+                    break # Đã tìm thấy tiết diện nhỏ nhất phù hợp, thoát vòng lặp
 
             if suggested_size:
                 st.info(f"👉 Gợi ý chọn tiết diện chuẩn thương mại CADIVI: **{suggested_size} mm²**")
             else:
-                st.error("❌ Không có tiết diện thương mại phù hợp. Vui lòng kiểm tra lại điều kiện tính toán.")
+                st.error("❌ Không có tiết diện thương mại phù hợp với các điều kiện đã nhập. Vui lòng kiểm tra lại thông số hoặc cân nhắc sử dụng dây có tiết diện lớn hơn.")
 
-            # Hiển thị bảng tra CADIVI cho dây Đồng
+            # Hiển thị bảng tra CADIVI cho dây Đồng (vẫn dùng ảnh vì trực quan)
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
@@ -132,7 +175,7 @@ elif main_menu == "Tính toán điện":
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây đồng: {e}")
 
-            # Hiển thị bảng tra CADIVI cho dây Nhôm
+            # Hiển thị bảng tra CADIVI cho dây Nhôm (vẫn dùng ảnh vì trực quan)
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
