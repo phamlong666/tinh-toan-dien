@@ -21,29 +21,38 @@ main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyể
 
 # Hàm để tải dữ liệu bảng tra từ file Excel
 @st.cache_data # Sử dụng cache để không phải đọc lại file mỗi lần tương tác
-def load_cable_data(file_path):
+def load_cable_data(copper_file_path, aluminum_file_path):
+    copper_capacities = {}
+    aluminum_capacities = {}
+    
     try:
-        # Đọc sheet 'Copper' cho dây Đồng
-        copper_df = pd.read_excel(file_path, sheet_name='Copper')
-        # Đọc sheet 'Aluminum' cho dây Nhôm
-        aluminum_df = pd.read_excel(file_path, sheet_name='Aluminum')
-
-        # Chuyển DataFrame thành dictionary cho dễ tra cứu
+        # Đọc dữ liệu cho dây Đồng
+        copper_df = pd.read_excel(copper_file_path) # Không cần sheet_name nếu chỉ có 1 sheet hoặc sheet đầu tiên
         # Giả sử cột đầu tiên là Tiết diện, cột thứ ba là Khả năng chịu tải đi trong ống (an toàn hơn)
         copper_capacities = dict(zip(copper_df.iloc[:, 0], copper_df.iloc[:, 2]))
-        aluminum_capacities = dict(zip(aluminum_df.iloc[:, 0], aluminum_df.iloc[:, 2]))
-        
-        return copper_capacities, aluminum_capacities
     except FileNotFoundError:
-        st.error(f"❌ Không tìm thấy file Excel '{file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
-        return {}, {}
+        st.error(f"❌ Không tìm thấy file Excel '{copper_file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
     except Exception as e:
-        st.error(f"❌ Có lỗi xảy ra khi đọc file Excel: {e}. Vui lòng kiểm tra định dạng file và tên sheet (Copper, Aluminum).")
-        return {}, {}
+        st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Đồng: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+
+    try:
+        # Đọc dữ liệu cho dây Nhôm
+        aluminum_df = pd.read_excel(aluminum_file_path) # Không cần sheet_name nếu chỉ có 1 sheet hoặc sheet đầu tiên
+        # Giả sử cột đầu tiên là Tiết diện, cột thứ ba là Khả năng chịu tải đi trong ống (an toàn hơn)
+        aluminum_capacities = dict(zip(aluminum_df.iloc[:, 0], aluminum_df.iloc[:, 2]))
+    except FileNotFoundError:
+        st.error(f"❌ Không tìm thấy file Excel '{aluminum_file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
+    except Exception as e:
+        st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Nhôm: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+        
+    return copper_capacities, aluminum_capacities
 
 # Tải dữ liệu bảng tra khi ứng dụng khởi động
-# Đảm bảo tên file Excel là 'cable_data.xlsx' và nằm cùng thư mục
-copper_capacities, aluminum_capacities = load_cable_data('cable_data.xlsx')
+# Đảm bảo tên file Excel là chính xác và nằm cùng thư mục với app.py
+copper_capacities, aluminum_capacities = load_cable_data(
+    'cadivi_cho bảng tra dây đồng.xlsx', 
+    'cadivi_cho bảng tra dây nhôm.xlsx'
+)
 
 
 # Xử lý các lựa chọn từ menu chính
