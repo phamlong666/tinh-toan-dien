@@ -236,8 +236,11 @@ elif main_menu == "Tính toán điện":
 
             # --- Bắt đầu phần tạo và xuất PDF ---
             # Tạo một đối tượng BytesIO để lưu PDF vào bộ nhớ
+            # Đã điều chỉnh lề trên và lề dưới để tối ưu hóa không gian
             buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=A4)
+            doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                    topMargin=0.75 * inch, # Giảm lề trên
+                                    bottomMargin=0.75 * inch) # Giảm lề dưới
             styles = getSampleStyleSheet()
 
             # Định nghĩa style cho tiếng Việt
