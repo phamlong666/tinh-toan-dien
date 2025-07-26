@@ -184,9 +184,9 @@ elif main_menu == "Tính toán điện":
 
         # Thêm các trường nhập liệu mới cho Khách hàng
         st.subheader("Thông tin Khách hàng")
-        customer_name = st.text_input("Tên khách hàng:", value="Điện lực Định Hóa")
-        customer_address = st.text_input("Địa chỉ:", value="Thị trấn Chợ Chu, Định Hóa, Thái Nguyên")
-        customer_phone = st.text_input("Số điện thoại khách hàng:", value="0987 654 321")
+        customer_name = st.text_input("Tên khách hàng:", value="Phạm Hồng Long")
+        customer_address = st.text_input("Địa chỉ:", value="xã Định Hóa,tỉnh Thái Nguyên")
+        customer_phone = st.text_input("Số điện thoại khách hàng:", value="0968552888")
         
         # Lấy thời gian thực (chỉ ngày, tháng, năm)
         current_date = datetime.now().strftime("Ngày %d tháng %m năm %Y")
@@ -382,6 +382,46 @@ elif main_menu == "Tính toán điện":
                 st.session_state['pdf_bytes'] = pdf_bytes
                 st.session_state['pdf_filename'] = f"Phieu_tinh_toan_day_cap_dien_{datetime.now().strftime('%Y%m%d')}.pdf"
 
+            # --- Các nút PDF riêng biệt ---
+            if 'pdf_bytes' in st.session_state and st.session_state['pdf_bytes']:
+                col_pdf1, col_pdf2 = st.columns(2)
+                with col_pdf1:
+                    st.download_button(
+                        label="Xuất PDF",
+                        data=st.session_state['pdf_bytes'],
+                        file_name=st.session_state['pdf_filename'],
+                        mime="application/pdf",
+                        help="Tải về phiếu tính toán dưới dạng PDF"
+                    )
+                with col_pdf2:
+                    # Nút "Xem phiếu" sẽ mở PDF trong tab mới
+                    # Sử dụng base64 để nhúng PDF vào data URI cho thẻ <a>
+                    pdf_base64 = base64.b64encode(st.session_state['pdf_bytes']).decode('utf-8')
+                    
+                    # Để mở trong tab mới mà không tải xuống, chúng ta loại bỏ thuộc tính 'download'
+                    # và sử dụng target="_blank"
+                    st.markdown(
+                        f"""
+                        <a href="data:application/pdf;base64,{pdf_base64}" target="_blank">
+                            <button style="
+                                background-color: #4CAF50; /* Green */
+                                border: none;
+                                color: white;
+                                padding: 10px 24px;
+                                text-align: center;
+                                text-decoration: none;
+                                display: inline-block;
+                                font-size: 16px;
+                                margin: 4px 2px;
+                                cursor: pointer;
+                                border-radius: 8px;
+                            ">Xem phiếu</button>
+                        </a>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    st.warning("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt.")
+
             # Hiển thị bảng tra CADIVI cho dây Đồng (vẫn dùng ảnh vì trực quan)
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
@@ -404,52 +444,6 @@ elif main_menu == "Tính toán điện":
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây nhôm: {e}")
         
-        # --- Các nút PDF riêng biệt ---
-        if 'pdf_bytes' in st.session_state and st.session_state['pdf_bytes']:
-            col_pdf1, col_pdf2 = st.columns(2)
-            with col_pdf1:
-                st.download_button(
-                    label="Xuất PDF",
-                    data=st.session_state['pdf_bytes'],
-                    file_name=st.session_state['pdf_filename'],
-                    mime="application/pdf",
-                    help="Tải về phiếu tính toán dưới dạng PDF"
-                )
-            with col_pdf2:
-                # Nút "Xem phiếu" sẽ mở PDF trong tab mới
-                # Sử dụng base64 để nhúng PDF vào data URI cho thẻ <a>
-                pdf_base64 = base64.b64encode(st.session_state['pdf_bytes']).decode('utf-8')
-                pdf_display = f'<iframe src="data:application/pdf;base64,{pdf_base64}" width="700" height="1000" type="application/pdf"></iframe>'
-                
-                # Để mở trong tab mới, cần một nút riêng và dùng st.markdown với HTML
-                # Tuy nhiên, Streamlit không cho phép trực tiếp mở tab mới từ st.button mà không tải về
-                # Cách tốt nhất là dùng download_button và hướng dẫn người dùng mở file đã tải
-                # Hoặc, tạo một nút và khi click, hiển thị iframe, nhưng iframe không mở tab mới
-                
-                # Giải pháp thay thế: Tạo một liên kết ẩn và click nó bằng JavaScript
-                # Đây là một workaround, không phải cách native của Streamlit
-                st.markdown(
-                    f"""
-                    <a href="data:application/pdf;base64,{pdf_base64}" download="{st.session_state['pdf_filename']}" target="_blank">
-                        <button style="
-                            background-color: #4CAF50; /* Green */
-                            border: none;
-                            color: white;
-                            padding: 10px 24px;
-                            text-align: center;
-                            text-decoration: none;
-                            display: inline-block;
-                            font-size: 16px;
-                            margin: 4px 2px;
-                            cursor: pointer;
-                            border-radius: 8px;
-                        ">Xem phiếu</button>
-                    </a>
-                    """,
-                    unsafe_allow_html=True
-                )
-                st.warning("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt.")
-
     elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
         U = st.number_input("Điện áp danh định (V):", min_value=0.0)
