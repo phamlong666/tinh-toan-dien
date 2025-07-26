@@ -6,6 +6,12 @@ import math
 from PIL import Image
 import pandas as pd # Import thư viện pandas
 
+# Lưu ý: Để đọc file Excel (.xlsx), thư viện 'openpyxl' là bắt buộc.
+# Nếu gặp lỗi liên quan đến 'openpyxl', vui lòng cài đặt bằng lệnh sau trong terminal:
+# pip install openpyxl
+# hoặc
+# conda install openpyxl
+
 # Thiết lập cấu hình trang
 st.set_page_config(page_title="Tính Toán Điện – Đội quản lý Điện lực khu vực Định Hóa", page_icon="⚡", layout="wide")
 
@@ -33,7 +39,11 @@ def load_cable_data(copper_file_path, aluminum_file_path):
     except FileNotFoundError:
         st.error(f"❌ Không tìm thấy file Excel '{copper_file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
     except Exception as e:
-        st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Đồng: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+        # Kiểm tra nếu lỗi là do thiếu openpyxl
+        if "No module named 'openpyxl'" in str(e) or "Missing optional dependency 'openpyxl'" in str(e):
+            st.error(f"❌ Lỗi: Thiếu thư viện 'openpyxl' để đọc file Excel dây Đồng. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
+        else:
+            st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Đồng: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
 
     try:
         # Đọc dữ liệu cho dây Nhôm
@@ -43,7 +53,11 @@ def load_cable_data(copper_file_path, aluminum_file_path):
     except FileNotFoundError:
         st.error(f"❌ Không tìm thấy file Excel '{aluminum_file_path}'. Vui lòng đảm bảo file nằm cùng thư mục với app.py.")
     except Exception as e:
-        st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Nhôm: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
+        # Kiểm tra nếu lỗi là do thiếu openpyxl
+        if "No module named 'openpyxl'" in str(e) or "Missing optional dependency 'openpyxl'" in str(e):
+            st.error(f"❌ Lỗi: Thiếu thư viện 'openpyxl' để đọc file Excel dây Nhôm. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
+        else:
+            st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây Nhôm: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
         
     return copper_capacities, aluminum_capacities
 
@@ -156,22 +170,26 @@ elif main_menu == "Tính toán điện":
             else: # material == "Nhôm"
                 current_capacities = aluminum_capacities
 
-            # Tìm tiết diện chuẩn nhỏ nhất thỏa mãn cả sụt áp và khả năng chịu tải
-            suggested_size = None
-            # Sắp xếp các tiết diện có sẵn để tìm ra tiết diện nhỏ nhất phù hợp
-            # Lấy keys (tiết diện) từ dictionary và sắp xếp
-            available_sizes = sorted(current_capacities.keys())
-
-            for size in available_sizes:
-                # Kiểm tra cả hai điều kiện: tiết diện đủ lớn theo sụt áp VÀ khả năng chịu tải đủ lớn theo dòng điện
-                if size >= S and current_capacities.get(size, 0) >= I:
-                    suggested_size = size
-                    break # Đã tìm thấy tiết diện nhỏ nhất phù hợp, thoát vòng lặp
-
-            if suggested_size:
-                st.info(f"👉 Gợi ý chọn tiết diện chuẩn thương mại CADIVI: **{suggested_size} mm²**")
+            # Kiểm tra nếu dữ liệu bảng tra rỗng (do lỗi đọc file Excel)
+            if not current_capacities:
+                st.error("❌ Không thể gợi ý tiết diện do không đọc được dữ liệu bảng tra từ file Excel. Vui lòng kiểm tra các lỗi đọc file Excel phía trên.")
             else:
-                st.error("❌ Không có tiết diện thương mại phù hợp với các điều kiện đã nhập. Vui lòng kiểm tra lại thông số hoặc cân nhắc sử dụng dây có tiết diện lớn hơn.")
+                # Tìm tiết diện chuẩn nhỏ nhất thỏa mãn cả sụt áp và khả năng chịu tải
+                suggested_size = None
+                # Sắp xếp các tiết diện có sẵn để tìm ra tiết diện nhỏ nhất phù hợp
+                # Lấy keys (tiết diện) từ dictionary và sắp xếp
+                available_sizes = sorted(current_capacities.keys())
+
+                for size in available_sizes:
+                    # Kiểm tra cả hai điều kiện: tiết diện đủ lớn theo sụt áp VÀ khả năng chịu tải đủ lớn theo dòng điện
+                    if size >= S and current_capacities.get(size, 0) >= I:
+                        suggested_size = size
+                        break # Đã tìm thấy tiết diện nhỏ nhất phù hợp, thoát vòng lặp
+
+                if suggested_size:
+                    st.info(f"👉 Gợi ý chọn tiết diện chuẩn thương mại CADIVI: **{suggested_size} mm²**")
+                else:
+                    st.error("❌ Không có tiết diện thương mại phù hợp với các điều kiện đã nhập. Vui lòng kiểm tra lại thông số hoặc cân nhắc sử dụng dây có tiết diện lớn hơn.")
 
             # Hiển thị bảng tra CADIVI cho dây Đồng (vẫn dùng ảnh vì trực quan)
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
