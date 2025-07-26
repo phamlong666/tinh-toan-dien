@@ -71,6 +71,7 @@ elif main_menu == "Tính toán điện":
         if st.button("Tính sụt áp"):
             st.success(f"Sụt áp ΔU ≈ {Udrop:.2f} V")
 
+    
     elif sub_menu_tinh_toan == "Chọn tiết diện dây dẫn":
         st.header("⚡ Chọn tiết diện dây dẫn")
 
@@ -102,12 +103,20 @@ elif main_menu == "Tính toán điện":
             rho = 0.0175 if material == "Đồng" else 0.028
             deltaU = U * deltaU_percent / 100
             S = (2 * rho * L * I) / deltaU
-            standard_sizes = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240]
-            closest_standard = min(standard_sizes, key=lambda x: abs(x - S))
-            st.success(f"Tiết diện S tính được ≈ {S:.2f} mm²")
-            st.info(f"👉 Gợi ý chọn tiết diện chuẩn thương mại: **{closest_standard} mm²**")
+            st.success(f"🔢 Tiết diện S tính được ≈ {S:.2f} mm²")
 
-    elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
+            standard_sizes = [1.5, 2.5, 4, 6, 10, 11, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400]
+            suggested_size = next((size for size in standard_sizes if size >= S), None)
+
+            if suggested_size:
+                st.info(f"👉 Gợi ý chọn tiết diện chuẩn thương mại CADIVI: **{suggested_size} mm²**")
+            else:
+                st.error("❌ Không có tiết diện thương mại phù hợp. Vui lòng kiểm tra lại điều kiện tính toán.")
+
+            # Hiển thị bảng tra CADIVI
+            st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI:**")
+            st.image("cadivi_table.jpg", caption="Bảng tra dây dẫn CADIVI", use_column_width=True)
+elif sub_menu_tinh_toan == "Chiều dài dây tối đa (ΔU%)":
         st.header("⚡ Chiều dài dây tối đa (ΔU%)")
         U = st.number_input("Điện áp danh định (V):", min_value=0.0)
         I = st.number_input("Dòng điện (A):", min_value=0.0)
