@@ -1,6 +1,7 @@
 streamlit>=1.32.0
 pandas
 openpyxl
-reportlab[mathtext]
+reportlab
 Pillow
+matplotlib
 
