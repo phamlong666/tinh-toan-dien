@@ -179,6 +179,17 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
 
     # Công thức và giải thích
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
+    story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
+    try:
+        # Tạo ảnh công thức từ matplotlib
+        formula_img_buf = render_latex_formula_to_image(formula_latex)
+        formula_img = Image(formula_img_buf, width=5.5*inch, height=0.8*inch)
+        story.append(formula_img)
+    except Exception as e:
+        story.append(Paragraph(f"(Không hiển thị được công thức LaTeX: {e})", styles['NormalStyle']))
+        story.append(Paragraph(formula_latex, styles['NormalStyle']))
+    story.append(Paragraph(formula_explanation, styles['NormalStyle']))
+    story.append(Spacer(1, 0.2 * inch))
     
     # Use MathText if available, otherwise fallback to Paragraph
     if MATH_TEXT_AVAILABLE:
