@@ -1,6 +1,21 @@
 
 import matplotlib.pyplot as plt
 
+from reportlab.platypus import Image as RLImage
+import matplotlib.pyplot as plt
+import io
+
+def render_latex_formula_to_image(latex_str):
+    fig, ax = plt.subplots(figsize=(5, 1))
+    ax.axis("off")
+    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=14, ha='center', va='center')
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2, dpi=200)
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
 def render_latex_formula_to_image(latex_str):
     fig, ax = plt.subplots(figsize=(5, 1))
     ax.axis("off")
