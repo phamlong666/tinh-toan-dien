@@ -19,6 +19,15 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
+# Try to import MathText for LaTeX rendering in PDF
+try:
+    from reportlab.platypus.mathtext import MathText
+    MATH_TEXT_AVAILABLE = True
+except ImportError:
+    st.warning("⚠️ Thư viện 'reportlab.platypus.mathtext' không tìm thấy. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng. Vui lòng đảm bảo ReportLab được cài đặt đầy đủ.")
+    MATH_TEXT_AVAILABLE = False
+
+
 # Đăng ký font hỗ trợ tiếng Việt (ví dụ: DejaVuSans, cần có sẵn trong môi trường)
 # Hoặc bạn có thể sử dụng một font khác có sẵn trên hệ thống hoặc cung cấp file .ttf
 try:
@@ -91,17 +100,15 @@ def load_cable_data(copper_file_path, aluminum_file_path):
                 st.error(f"❌ Có lỗi xảy ra khi đọc file Excel dây {material_type}: {e}. Vui lòng kiểm tra định dạng file và cấu trúc cột.")
             return {}
 
-    copper_data = read_excel_file(copper_file_path, "Đồng")
-    aluminum_data = read_excel_file(aluminum_file_path, "Nhôm")
+    copper_data = read_excel_file('cadivi_dong.xlsx', "Đồng")
+    aluminum_data = read_excel_file('cadivi_nhom.xlsx', "Nhôm")
         
     return copper_data, aluminum_data
 
 # Tải dữ liệu bảng tra khi ứng dụng khởi động
-# Đảm bảo tên file Excel là chính xác và nằm cùng thư mục với app.py
-# Đã đổi tên file để tránh lỗi ký tự đặc biệt/khoảng trắng
 copper_cable_data, aluminum_cable_data = load_cable_data(
-    'cadivi_dong.xlsx', # Tên file mới
-    'cadivi_nhom.xlsx'  # Tên file mới
+    'cadivi_dong.xlsx',
+    'cadivi_nhom.xlsx'
 )
 
 # Hàm tạo PDF chung
@@ -144,7 +151,17 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
 
     # Công thức và giải thích
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
-    story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
+    
+    # Use MathText if available, otherwise fallback to Paragraph
+    if MATH_TEXT_AVAILABLE:
+        # MathText expects the formula to be enclosed in $ or $$
+        # The formula_latex already has \(...\) which is equivalent to $...$
+        # So, we can just pass it directly.
+        story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
+        story.append(MathText(formula_latex, styles['NormalStyle']))
+    else:
+        story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
+    
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
 
@@ -291,7 +308,9 @@ elif main_menu == "Tính toán điện":
             output_results = {
                 "Dòng điện I": f"{I_result:.2f} A"
             }
-            formula_latex = r"\(I = \frac{P \cdot 1000}{U \cdot \cos\varphi} \quad \text{(1 pha)}\) hoặc \(I = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot \cos\varphi} \quad \text{(3 pha)}\)"
+            # The formula_latex needs to be a single string for MathText,
+            # so combine the 1-phase and 3-phase formulas.
+            formula_latex = r"\(I = \frac{P \cdot 1000}{U \cdot \cos\varphi} \quad \text{(1 pha)} \quad \text{hoặc} \quad I = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot \cos\varphi} \quad \text{(3 pha)}\)"
             formula_explanation = "Công thức tính dòng điện dựa trên công suất, điện áp và hệ số công suất cho hệ thống 1 pha hoặc 3 pha."
 
             pdf_bytes = create_pdf("DÒNG ĐIỆN", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -397,7 +416,8 @@ elif main_menu == "Tính toán điện":
             output_results = {
                 "Công suất P": f"{P_result:.2f} kW"
             }
-            formula_latex = r"\(P = U \cdot I \cdot \cos\varphi \quad \text{(1 pha)}\) hoặc \(P = \sqrt{3} \cdot U \cdot I \cdot \cos\varphi \quad \text{(3 pha)}\)"
+            # Combine 1-phase and 3-phase formulas for MathText
+            formula_latex = r"\(P = U \cdot I \cdot \cos\varphi \quad \text{(1 pha)} \quad \text{hoặc} \quad P = \sqrt{3} \cdot U \cdot I \cdot \cos\varphi \quad \text{(3 pha)}\)"
             formula_explanation = "Công thức tính công suất dựa trên điện áp, dòng điện và hệ số công suất cho hệ thống 1 pha hoặc 3 pha."
 
             pdf_bytes = create_pdf("CÔNG SUẤT", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -465,7 +485,6 @@ elif main_menu == "Tính toán điện":
         calculator_title_sd = st.text_input("Chức danh:", value="Tổ trưởng tổ KDDV", key="calc_title_sd")
         calculator_phone_sd = st.text_input("Số điện thoại:", value="0978578777", key="calc_phone_sd")
 
-        # Thêm các trường nhập liệu mới cho Khách hàng
         st.subheader("Thông tin Khách hàng")
         customer_name_sd = st.text_input("Tên khách hàng:", value="Phạm Hồng Long", key="cust_name_sd")
         customer_address_sd = st.text_input("Địa chỉ:", value="xã Định Hóa, tỉnh Thái Nguyên", key="cust_address_sd")
