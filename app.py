@@ -1,3 +1,16 @@
+
+import matplotlib.pyplot as plt
+
+def render_latex_formula_to_image(latex_str):
+    fig, ax = plt.subplots(figsize=(5, 1))
+    ax.axis("off")
+    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=14, ha='center', va='center')
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2, dpi=200)
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
 # app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức điện
 
 # Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
@@ -21,8 +34,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 # Try to import MathText for LaTeX rendering in PDF
 try:
-    from reportlab.platypus.mathtext import MathText
-    MATH_TEXT_AVAILABLE = True
+    
+    MATH_TEXT_AVAILABLE = False
 except ImportError:
     st.warning("⚠️ Thư viện 'reportlab.platypus.mathtext' không tìm thấy. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng. Vui lòng đảm bảo ReportLab được cài đặt đầy đủ.")
     MATH_TEXT_AVAILABLE = False
