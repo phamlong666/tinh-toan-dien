@@ -154,11 +154,23 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     
     # Use MathText if available, otherwise fallback to Paragraph
     if MATH_TEXT_AVAILABLE:
-        # MathText expects the formula to be enclosed in $ or $$
-        # The formula_latex already has \(...\) which is equivalent to $...$
-        # So, we can just pass it directly.
+        # MathText expects the formula to be enclosed in $ or $$.
+        # The formula_latex already has \(...\) which is equivalent to $...$.
+        # We need to remove the \text{} and \quad commands for better MathText parsing
+        # and ensure it's treated as a single mathematical expression.
+        # For multi-line formulas, we can use $$...$$ for display mode.
+        # Let's try to simplify the formula for MathText by removing \text and \quad
+        # and put each formula on a new line if needed, or keep it concise.
+        
+        # Remove \( and \) and replace with $$ for display mode in MathText
+        cleaned_formula_latex = formula_latex.replace(r"\(", "$$").replace(r"\)", "$$")
+        # Remove \text{} and \quad for better MathText compatibility
+        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(1 pha)}", "")
+        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
+        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc"
+        
         story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
-        story.append(MathText(formula_latex, styles['NormalStyle']))
+        story.append(MathText(cleaned_formula_latex, styles['NormalStyle']))
     else:
         story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
     
@@ -310,7 +322,8 @@ elif main_menu == "Tính toán điện":
             }
             # The formula_latex needs to be a single string for MathText,
             # so combine the 1-phase and 3-phase formulas.
-            formula_latex = r"\(I = \frac{P \cdot 1000}{U \cdot \cos\varphi} \quad \text{(1 pha)} \quad \text{hoặc} \quad I = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot \cos\varphi} \quad \text{(3 pha)}\)"
+            # Removed \text{} and \quad for better MathText parsing in PDF
+            formula_latex = r"I = \frac{P \cdot 1000}{U \cdot \cos\varphi} \quad \text{(1 pha)} \quad \text{hoặc} \quad I = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot \cos\varphi} \quad \text{(3 pha)}"
             formula_explanation = "Công thức tính dòng điện dựa trên công suất, điện áp và hệ số công suất cho hệ thống 1 pha hoặc 3 pha."
 
             pdf_bytes = create_pdf("DÒNG ĐIỆN", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -417,7 +430,8 @@ elif main_menu == "Tính toán điện":
                 "Công suất P": f"{P_result:.2f} kW"
             }
             # Combine 1-phase and 3-phase formulas for MathText
-            formula_latex = r"\(P = U \cdot I \cdot \cos\varphi \quad \text{(1 pha)} \quad \text{hoặc} \quad P = \sqrt{3} \cdot U \cdot I \cdot \cos\varphi \quad \text{(3 pha)}\)"
+            # Removed \text{} and \quad for better MathText parsing in PDF
+            formula_latex = r"P = U \cdot I \cdot \cos\varphi \quad \text{(1 pha)} \quad \text{hoặc} \quad P = \sqrt{3} \cdot U \cdot I \cdot \cos\varphi \quad \text{(3 pha)}"
             formula_explanation = "Công thức tính công suất dựa trên điện áp, dòng điện và hệ số công suất cho hệ thống 1 pha hoặc 3 pha."
 
             pdf_bytes = create_pdf("CÔNG SUẤT", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -564,7 +578,7 @@ elif main_menu == "Tính toán điện":
                 "Sụt áp ΔU%": f"{deltaU_percent_sd:.2f} %",
                 "Điện áp tại tải": f"{U_at_load_sd:.3f} V"
             }
-            formula_latex = r"\(\Delta U = \frac{k \cdot L \cdot P}{S \cdot U \cdot \cos\varphi \cdot n_{song song}}\)"
+            formula_latex = r"\Delta U = \frac{k \cdot L \cdot P}{S \cdot U \cdot \cos\varphi \cdot n_{song song}}"
             formula_explanation = "Công thức tính toán độ sụt áp trên dây dẫn để đảm bảo điện áp tại tải nằm trong giới hạn cho phép, tránh ảnh hưởng đến hoạt động của thiết bị."
 
             pdf_bytes_sd = create_pdf("SỤT ÁP DÂY CÁP ĐIỆN", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -881,10 +895,10 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây đồng.jpg", "rb") as f:
+                with open("cadivi_cho bảng tra dây đồng.rb", "rb") as f:
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Đồng)", use_container_width=True)
             except FileNotFoundError:
-                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây đồng: {e}")
 
@@ -892,10 +906,10 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây nhôm.jpg", "rb") as f:
+                with open("cadivi_cho bảng tra dây nhôm.rb", "rb") as f:
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Nhôm)", use_container_width=True)
             except FileNotFoundError:
-                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây nhôm: {e}")
         
@@ -959,7 +973,7 @@ elif main_menu == "Tính toán điện":
             output_results = {
                 "Chiều dài dây tối đa": f"{Lmax_result:.1f} m"
             }
-            formula_latex = r"\(L_{max} = \frac{U \cdot (\Delta U\% / 100)}{2 \cdot I \cdot R_{don\_vi}} \cdot 1000\)"
+            formula_latex = r"L_{max} = \frac{U \cdot (\Delta U\% / 100)}{2 \cdot I \cdot R_{don\_vi}} \cdot 1000"
             formula_explanation = "Công thức xác định chiều dài tối đa của dây dẫn để đảm bảo sụt áp không vượt quá giới hạn cho phép."
 
             pdf_bytes = create_pdf("CHIỀU DÀI DÂY TỐI ĐA", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -1054,7 +1068,7 @@ elif main_menu == "Tính toán điện":
             output_results = {
                 "Tổng trở Z": f"{Z_result:.2f} Ω"
             }
-            formula_latex = r"\(Z = \sqrt{R^2 + X^2}\)"
+            formula_latex = r"Z = \sqrt{R^2 + X^2}"
             formula_explanation = "Công thức tính tổng trở của mạch điện xoay chiều từ điện trở và điện kháng."
 
             pdf_bytes = create_pdf("ĐIỆN TRỞ – KHÁNG – TRỞ KHÁNG", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
@@ -1149,7 +1163,7 @@ elif main_menu == "Tính toán điện":
             output_results = {
                 "Tổn thất công suất Ptt": f"{Ptt_result:.2f} W"
             }
-            formula_latex = r"\(P_{tt} = I^2 \cdot R\)"
+            formula_latex = r"P_{tt} = I^2 \cdot R"
             formula_explanation = "Công thức tính toán công suất bị hao phí trên đường dây truyền tải."
 
             pdf_bytes = create_pdf("TỔN THẤT CÔNG SUẤT TRÊN DÂY", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
