@@ -163,7 +163,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     story = []
 
     story.append(Paragraph(f"<b>PHIẾU TÍNH TOÁN {title.upper()}</b>", styles['TitleStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
 
     # Thông tin chung
     story.append(Paragraph("<b>1. THÔNG TIN CHUNG</b>", styles['Heading2Style']))
@@ -175,21 +175,36 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     story.append(Paragraph(f"<b>Địa chỉ:</b> {customer_info['address']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Điện thoại khách hàng:</b> {customer_info['phone']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Thời gian lập phiếu:</b> {datetime.now().strftime('Ngày %d tháng %m năm %Y')}", styles['NormalStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
 
     # Công thức và giải thích
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
+
     story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
     try:
         # Tạo ảnh công thức từ matplotlib
         formula_img_buf = render_latex_formula_to_image(formula_latex)
-        formula_img = Image(formula_img_buf, width=5.5*inch, height=0.8*inch)
+        formula_img = Image(formula_img_buf, width=5.0*inch, height=0.5*inch)
+        story.append(formula_img)
+    except Exception as e:
+        story.append(Paragraph(f"(Không hiển thị được công thức LaTeX: {e})", styles['NormalStyle']))
+        story.append(Paragraph(formula_latex, styles['NormalStyle']))
+
+    story.append(Paragraph("<i><b>Giải thích công thức & đơn vị:</b></i>", styles['NormalStyle']))
+    story.append(Paragraph(formula_explanation, styles['NormalStyle']))
+    story.append(Spacer(1, 0.1 * inch))
+
+    story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
+    try:
+        # Tạo ảnh công thức từ matplotlib
+        formula_img_buf = render_latex_formula_to_image(formula_latex)
+        formula_img = Image(formula_img_buf, width=5.0*inch, height=0.5*inch)
         story.append(formula_img)
     except Exception as e:
         story.append(Paragraph(f"(Không hiển thị được công thức LaTeX: {e})", styles['NormalStyle']))
         story.append(Paragraph(formula_latex, styles['NormalStyle']))
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
     
     # Use MathText if available, otherwise fallback to Paragraph
     if MATH_TEXT_AVAILABLE:
@@ -214,7 +229,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
     
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
 
     # Thông số đầu vào
     story.append(Paragraph("<b>3. THÔNG SỐ ĐẦU VÀO</b>", styles['Heading2Style']))
@@ -232,7 +247,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
     ]))
     story.append(input_table)
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
 
     # Kết quả tính toán
     story.append(Paragraph("<b>4. KẾT QUẢ TÍNH TOÁN</b>", styles['Heading2Style']))
@@ -250,13 +265,13 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
     ]))
     story.append(output_table)
-    story.append(Spacer(1, 0.5 * inch))
+    story.append(Spacer(1, 0.1 * inch))
     
     # Chữ ký
     signature_data = [
         [Paragraph("<b>NGƯỜI TÍNH TOÁN</b>", styles['TableCellBoldStyle']), Paragraph("<b>KHÁCH HÀNG</b>", styles['TableCellBoldStyle'])],
         [Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle']), Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle'])],
-        [Spacer(1, 0.8 * inch), Spacer(1, 0.8 * inch)],
+        [Spacer(1, 0.4 * inch), Spacer(1, 0.4 * inch)],
         [Paragraph(f"<b>{calculator_info['name']}</b>", styles['TableCellBoldStyle']), Paragraph(f"<b>{customer_info['name']}</b>", styles['TableCellBoldStyle'])]
     ]
     signature_table = Table(signature_data, colWidths=[2.75*inch, 2.75*inch])
@@ -268,7 +283,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         ('TOPPADDING', (0,0), (-1,-1), 2),
     ]))
     story.append(signature_table)
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch))
 
     doc.build(story)
     pdf_bytes = buffer.getvalue()
@@ -800,7 +815,7 @@ elif main_menu == "Tính toán điện":
 
                 # Tiêu đề phiếu
                 story.append(Paragraph("<b>PHIẾU TÍNH TOÁN LỰA CHỌN DÂY CÁP ĐIỆN</b>", styles['TitleStyle']))
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.1 * inch))
 
                 # Thông tin chung
                 story.append(Paragraph("<b>1. THÔNG TIN CHUNG</b>", styles['Heading2Style']))
@@ -812,7 +827,7 @@ elif main_menu == "Tính toán điện":
                 story.append(Paragraph(f"<b>Địa chỉ:</b> {customer_address}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Điện thoại khách hàng:</b> {customer_phone}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Thời gian lập phiếu:</b> {current_date}", styles['NormalStyle']))
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.1 * inch))
 
                 # Thông số đầu vào
                 story.append(Paragraph("<b>2. THÔNG SỐ ĐẦU VÀO</b>", styles['Heading2Style']))
@@ -838,7 +853,7 @@ elif main_menu == "Tính toán điện":
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
                 ]))
                 story.append(input_table)
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.1 * inch))
 
                 # Kết quả tính toán
                 story.append(Paragraph("<b>3. KẾT QUẢ TÍNH TOÁN VÀ GỢI Ý</b>", styles['Heading2Style']))
@@ -859,13 +874,13 @@ elif main_menu == "Tính toán điện":
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
                 ]))
                 story.append(output_table)
-                story.append(Spacer(1, 0.5 * inch)) # Thêm khoảng trống trước chữ ký
+                story.append(Spacer(1, 0.1 * inch)) # Thêm khoảng trống trước chữ ký
                 
                 # Chữ ký
                 signature_data = [
                     [Paragraph("<b>NGƯỜI TÍNH TOÁN</b>", styles['TableCellBoldStyle']), Paragraph("<b>KHÁCH HÀNG</b>", styles['TableCellBoldStyle'])],
                     [Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle']), Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle'])],
-                    [Spacer(1, 0.8 * inch), Spacer(1, 0.8 * inch)], # Khoảng trống cho chữ ký
+                    [Spacer(1, 0.4 * inch), Spacer(1, 0.4 * inch)], # Khoảng trống cho chữ ký
                     [Paragraph(f"<b>{calculator_name}</b>", styles['TableCellBoldStyle']), Paragraph(f"<b>{customer_name}</b>", styles['TableCellBoldStyle'])]
                 ]
                 signature_table = Table(signature_data, colWidths=[2.75*inch, 2.75*inch])
@@ -877,7 +892,7 @@ elif main_menu == "Tính toán điện":
                     ('TOPPADDING', (0,0), (-1,-1), 2),
                 ]))
                 story.append(signature_table)
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.1 * inch))
 
 
                 doc.build(story)
