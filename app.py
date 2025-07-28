@@ -1,21 +1,8 @@
-
-import matplotlib.pyplot as plt
-
-from reportlab.platypus import Image as RLImage
 import matplotlib.pyplot as plt
 import io
+from reportlab.platypus import Image as RLImage # Keep this if RLImage is used elsewhere, otherwise it's redundant
 
-def render_latex_formula_to_image(latex_str):
-    fig, ax = plt.subplots(figsize=(5, 1))
-    ax.axis("off")
-    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=14, ha='center', va='center')
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2, dpi=200)
-    plt.close(fig)
-    buf.seek(0)
-    return buf
-
-
+# Removed duplicate render_latex_formula_to_image function
 def render_latex_formula_to_image(latex_str):
     fig, ax = plt.subplots(figsize=(5, 1))
     ax.axis("off")
@@ -49,8 +36,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 # Try to import MathText for LaTeX rendering in PDF
 try:
-    
-    MATH_TEXT_AVAILABLE = False
+    from reportlab.platypus.mathtext import MathText # Explicitly import MathText
+    MATH_TEXT_AVAILABLE = True
 except ImportError:
     st.warning("⚠️ Thư viện 'reportlab.platypus.mathtext' không tìm thấy. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng. Vui lòng đảm bảo ReportLab được cài đặt đầy đủ.")
     MATH_TEXT_AVAILABLE = False
@@ -181,6 +168,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
     
     # Use MathText if available, otherwise fallback to Paragraph
+    story.append(Paragraph("Công thức tính:", styles['NormalStyle'])) # This line should always be there
     if MATH_TEXT_AVAILABLE:
         # MathText expects the formula to be enclosed in $ or $$.
         # The formula_latex already has \(...\) which is equivalent to $...$.
@@ -197,10 +185,10 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
         cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc"
         
-        story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
         story.append(MathText(cleaned_formula_latex, styles['NormalStyle']))
     else:
-        
+        # Fallback if MathText is not available, render as a regular Paragraph
+        story.append(Paragraph(formula_latex, styles['NormalStyle']))
     
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
@@ -923,7 +911,8 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây đồng.rb", "rb") as f:
+                # Lưu ý: File .rb không phải định dạng ảnh thông thường, hãy đảm bảo bạn có file ảnh đúng định dạng (ví dụ: .jpg, .png)
+                with open("cadivi_cho bảng tra dây đồng.rb", "rb") as f: # Consider changing .rb to .jpg or .png if it's an image
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Đồng)", use_container_width=True)
             except FileNotFoundError:
                 st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
@@ -934,7 +923,8 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây nhôm.rb", "rb") as f:
+                # Lưu ý: File .rb không phải định dạng ảnh thông thường, hãy đảm bảo bạn có file ảnh đúng định dạng (ví dụ: .jpg, .png)
+                with open("cadivi_cho bảng tra dây nhôm.rb", "rb") as f: # Consider changing .rb to .jpg or .png if it's an image
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Nhôm)", use_container_width=True)
             except FileNotFoundError:
                 st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
@@ -1325,4 +1315,3 @@ elif main_menu == "Công thức điện":
         i = math.sqrt(ptt / r) if r != 0 else 0
         if st.button("Tính I"):
             st.success(f"I ≈ {i:.3f} A")
-
