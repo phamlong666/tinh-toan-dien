@@ -993,7 +993,7 @@ elif main_menu == "Công thức điện":
             pdf_bytes = create_pdf("DÒNG ĐIỆN (TỪ ΔU & R)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
             st.session_state['pdf_bytes_du_r_i'] = pdf_bytes
             st.session_state['pdf_filename_du_r_i'] = f"Phieu_tinh_I_tu_DU_R_{datetime.now().strftime('%Y%m%d')}.pdf"
-        if 'pdf_bytes_du_r_i' in st.session_state and st.session_state['pdf_bytes_du_r_i']:
+        if 'pdf_bytes_du_r_i' in st.session_state and st.session_state['pdf_bytes_du_i_r']:
             st.markdown("---")
             col_pdf1_du_r_i, col_pdf2_du_r_i = st.columns(2)
             with col_pdf1_du_r_i:
