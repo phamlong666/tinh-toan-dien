@@ -1690,7 +1690,7 @@ elif main_menu == "Tính toán điện":
 
                 # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
                 st.markdown("---")
-                st.markdown("📘 **Tham khảo biểu đồ công suất phản kháng:**")
+                st.markdown("📘 **Tham khảo hệ số công suất phản kháng theo Thông tư 15/2014/TT-BCT:**")
                 try:
                     with open("Muabancongsuatphankhang.jpg", "rb") as f:
                         st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
