@@ -42,18 +42,13 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 # Try to import MathText for LaTeX rendering in PDF
 try:
-    # MathText is part of reportlab.platypus. It's not a separate library.
-    # The import statement for MathText is usually from reportlab.platypus.mathtext
-    # However, it's not always straightforward to use and might require specific LaTeX distributions.
-    # Given the user's previous error, it's safer to rely on Matplotlib for LaTeX rendering.
-    # Keeping this block for completeness but ensuring it doesn't break if MathText isn't fully configured.
     from reportlab.platypus.mathtext import MathText
     MATH_TEXT_AVAILABLE = True
 except ImportError:
-    st.warning("⚠️ Thư viện 'reportlab.platypus.mathtext' không tìm thấy. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng. Vui lòng đảm bảo ReportLab được cài đặt đầy đủ.")
+    # Removed the st.warning message as requested by the user.
     MATH_TEXT_AVAILABLE = False
 except Exception as e:
-    st.warning(f"⚠️ Lỗi khi tải MathText: {e}. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng.")
+    # Removed the st.warning message as requested by the user.
     MATH_TEXT_AVAILABLE = False
 
 
@@ -152,17 +147,18 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     styles = getSampleStyleSheet()
 
     try:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=14, alignment=1, spaceAfter=10)) # Reduced font size and spacing
-        styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=11, spaceAfter=5)) # Reduced font size and spacing
-        styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=9, spaceAfter=4)) # Reduced font size and spacing
-        styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=8, alignment=0, leading=10)) # Reduced font size, added leading for line spacing
-        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=8, alignment=0, leading=10)) # Reduced font size, added leading for line spacing
+        # Increased font sizes for better readability
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=15, alignment=1, spaceAfter=10)) 
+        styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=12, spaceAfter=5)) 
+        styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=10, spaceAfter=4)) 
+        styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=9, alignment=0, leading=11)) # Increased font size and leading
+        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=9, alignment=0, leading=11)) # Increased font size and leading
     except KeyError:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=14, alignment=1, spaceAfter=10))
-        styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=11, spaceAfter=5))
-        styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=9, spaceAfter=4))
-        styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=8, alignment=0, leading=10))
-        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=8, alignment=0, leading=10))
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=10))
+        styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=12, spaceAfter=5))
+        styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=10, spaceAfter=4))
+        styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=9, alignment=0, leading=11))
+        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=9, alignment=0, leading=11))
 
     story = []
 
@@ -781,18 +777,19 @@ elif main_menu == "Tính toán điện":
                 # Cần đảm bảo font 'DejaVuSans' và 'DejaVuSans-Bold' đã được đăng ký
                 # Nếu không có font tiếng Việt, ReportLab sẽ dùng font mặc định và có thể bị lỗi hiển thị
                 try:
-                    styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=14, alignment=1, spaceAfter=10))
-                    styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=11, spaceAfter=5))
-                    styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=9, spaceAfter=4))
-                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=8, alignment=0, leading=10))
-                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=8, alignment=0, leading=10))
+                    # Increased font sizes for better readability
+                    styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=15, alignment=1, spaceAfter=10))
+                    styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=12, spaceAfter=5))
+                    styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=10, spaceAfter=4))
+                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=9, alignment=0, leading=11))
+                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=9, alignment=0, leading=11))
                 except KeyError:
                     st.warning("⚠️ Không tìm thấy font tiếng Việt đã đăng ký. PDF sẽ sử dụng font mặc định của ReportLab, có thể không hiển thị tiếng Việt đúng cách.")
-                    styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=14, alignment=1, spaceAfter=10))
-                    styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=11, spaceAfter=5))
-                    styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=9, spaceAfter=4))
-                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=8, alignment=0, leading=10))
-                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=8, alignment=0, leading=10))
+                    styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=10))
+                    styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=12, spaceAfter=5))
+                    styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=10, spaceAfter=4))
+                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=9, alignment=0, leading=11))
+                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=9, alignment=0, leading=11))
 
 
                 story = []
