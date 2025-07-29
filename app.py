@@ -40,9 +40,6 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# Removed the MathText import block entirely as it was not being used and caused issues.
-# The LaTeX rendering for PDF is handled by Matplotlib.
-
 # Đăng ký font hỗ trợ tiếng Việt (ví dụ: DejaVuSans, cần có sẵn trong môi trường)
 # Hoặc bạn có thể sử dụng một font khác có sẵn trên hệ thống hoặc cung cấp file .ttf
 try:
@@ -790,18 +787,21 @@ elif main_menu == "Tính toán điện":
                 story.append(Spacer(1, 0.15 * inch))
 
                 # Thông số đầu vào
+                input_data = {
+                    "Loại điện": pha,
+                    "Công suất tải (P)": f"{P} kW",
+                    "Điện áp danh định (U)": f"{U} V",
+                    "Hệ số công suất (cosφ)": cos_phi,
+                    "Chiều dài dây dẫn (L)": f"{L} m",
+                    "Sụt áp cho phép (ΔU%)": f"{deltaU_percent} %",
+                    "Chất liệu dây dẫn": material,
+                    "Phương pháp lắp đặt": installation_method
+                }
                 story.append(Paragraph("<b>2. THÔNG SỐ ĐẦU VÀO</b>", styles['Heading2Style']))
-                input_data = [
-                    [Paragraph("<b>Loại điện:</b>", styles['TableCellBoldStyle']), Paragraph(pha, styles['TableCellStyle'])],
-                    [Paragraph("<b>Công suất tải (P):</b>", styles['TableCellBoldStyle']), Paragraph(f"{P} kW", styles['TableCellStyle'])],
-                    [Paragraph("<b>Điện áp danh định (U):</b>", styles['TableCellBoldStyle']), Paragraph(f"{U} V", styles['TableCellStyle'])],
-                    [Paragraph("<b>Hệ số công suất (cosφ):</b>", styles['TableCellBoldStyle']), Paragraph(str(cos_phi), styles['TableCellStyle'])],
-                    [Paragraph("<b>Chiều dài dây dẫn (L):</b>", styles['TableCellBoldStyle']), Paragraph(f"{L} m", styles['TableCellStyle'])],
-                    [Paragraph("<b>Sụt áp cho phép (ΔU%):</b>", styles['TableCellBoldStyle']), Paragraph(f"{deltaU_percent} %", styles['TableCellStyle'])],
-                    [Paragraph("<b>Chất liệu dây dẫn:</b>", styles['TableCellBoldStyle']), Paragraph(material, styles['TableCellStyle'])],
-                    [Paragraph("<b>Phương pháp lắp đặt:</b>", styles['TableCellBoldStyle']), Paragraph(installation_method, styles['TableCellStyle'])]
-                ]
-                input_table = Table(input_data, colWidths=[2.5*inch, 3*inch])
+                input_table_data = []
+                for label, value in input_data.items():
+                    input_table_data.append([Paragraph(f"<b>{label}</b>", styles['TableCellBoldStyle']), Paragraph(str(value), styles['TableCellStyle'])])
+                input_table = Table(input_table_data, colWidths=[2.5*inch, 3*inch])
                 input_table.setStyle(TableStyle([
                     ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                     ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
@@ -816,12 +816,15 @@ elif main_menu == "Tính toán điện":
 
                 # Kết quả tính toán
                 story.append(Paragraph("<b>3. KẾT QUẢ TÍNH TOÁN VÀ GỢI Ý</b>", styles['Heading2Style']))
-                output_data = [
-                    [Paragraph("<b>Dòng điện tính toán (I):</b>", styles['TableCellBoldStyle']), Paragraph(f"{I:.2f} A", styles['TableCellStyle'])],
-                    [Paragraph("<b>Tiết diện S tối thiểu theo sụt áp:</b>", styles['TableCellBoldStyle']), Paragraph(f"{S:.2f} mm²", styles['TableCellStyle'])],
-                    [Paragraph("<b>Gợi ý tiết diện chuẩn CADIVI:</b>", styles['TableCellBoldStyle']), Paragraph(f"{suggested_size} mm²", styles['TableCellStyle'])]
-                ]
-                output_table = Table(output_data, colWidths=[3*inch, 2.5*inch])
+                output_data = {
+                    "Dòng điện tính toán (I)": f"{I:.2f} A",
+                    "Tiết diện S tối thiểu theo sụt áp": f"{S:.2f} mm²",
+                    "Gợi ý tiết diện chuẩn CADIVI": f"{suggested_size} mm²"
+                }
+                output_table_data = []
+                for label, value in output_data.items():
+                    output_table_data.append([Paragraph(f"<b>{label}</b>", styles['TableCellBoldStyle']), Paragraph(str(value), styles['TableCellStyle'])])
+                output_table = Table(output_table_data, colWidths=[3*inch, 2.5*inch])
                 output_table.setStyle(TableStyle([
                     ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                     ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
@@ -1287,28 +1290,205 @@ elif main_menu == "Chuyển đổi đơn vị":
 elif main_menu == "Công thức điện":
     st.header("📐 Tính toán theo công thức điện")
     cong_thuc = st.selectbox("Tính ngược theo:", ["ΔU & I → R", "Ptt & I → R", "ΔU & R → I", "Ptt & R → I"])
-    if cong_thuc == "ΔU & I → R":
-        u = st.number_input("ΔU (V):")
-        i = st.number_input("I (A):")
-        r = u / i if i != 0 else 0
-        if st.button("Tính R"):
-            st.success(f"R ≈ {r:.3f} Ω")
-    elif cong_thuc == "Ptt & I → R":
-        ptt = st.number_input("Ptt (W):")
-        i = st.number_input("I (A):")
-        r = ptt / (i**2) if i != 0 else 0
-        if st.button("Tính R"):
-            st.success(f"R ≈ {r:.3f} Ω")
-    elif cong_thuc == "ΔU & R → I":
-        u = st.number_input("ΔU (V):")
-        r = st.number_input("R (Ω):")
-        i = u / r if r != 0 else 0
-        if st.button("Tính I"):
-            st.success(f"I ≈ {i:.3f} A")
-    elif cong_thuc == "Ptt & R → I":
-        ptt = st.number_input("Ptt (W):")
-        r = st.number_input("R (Ω):")
-        i = math.sqrt(ptt / r) if r != 0 else 0
-        if st.button("Tính I"):
-            st.success(f"I ≈ {i:.3f} A")
 
+    # Thêm thông tin người tính toán và khách hàng
+    st.subheader("Thông tin Người tính toán")
+    calculator_name_ct = st.text_input("Họ và tên:", value="Hà Thị Lê", key="calc_name_ct")
+    calculator_title_ct = st.text_input("Chức danh:", value="Tổ trưởng tổ KDDV", key="calc_title_ct")
+    calculator_phone_ct = st.text_input("Số điện thoại:", value="0978578777", key="calc_phone_ct")
+
+    st.subheader("Thông tin Khách hàng")
+    customer_name_ct = st.text_input("Tên khách hàng:", value="Phạm Hồng Long", key="cust_name_ct")
+    customer_address_ct = st.text_input("Địa chỉ:", value="xã Định Hóa, tỉnh Thái Nguyên", key="cust_address_ct")
+    customer_phone_ct = st.text_input("Số điện thoại khách hàng:", value="0968552888", key="cust_phone_ct")
+    
+    current_date_ct = datetime.now().strftime("Ngày %d tháng %m năm %Y")
+    st.markdown(f"**Thời gian lập phiếu:** {current_date_ct}")
+
+    if cong_thuc == "ΔU & I → R":
+        st.latex(r"R = \frac{\Delta U}{I}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( R \): Điện trở (Ω)
+        - \( \Delta U \): Sụt áp (V)
+        - \( I \): Dòng điện (A)
+        
+        **Mục đích:** Tính toán điện trở của một đoạn mạch khi biết sụt áp và dòng điện.
+        """, unsafe_allow_html=True)
+        u = st.number_input("ΔU (V):", min_value=0.0, key="du_i_r_u")
+        i = st.number_input("I (A):", min_value=0.0, key="du_i_r_i")
+        r = u / i if i != 0 else 0
+        if st.button("Tính R", key="btn_calc_du_i_r"):
+            st.success(f"R ≈ {r:.3f} Ω")
+            calculator_info = {
+                'name': calculator_name_ct,
+                'title': calculator_title_ct,
+                'phone': calculator_phone_ct
+            }
+            customer_info = {
+                'name': customer_name_ct,
+                'address': customer_address_ct,
+                'phone': customer_phone_ct
+            }
+            input_params = {
+                "Sụt áp ΔU": f"{u} V",
+                "Dòng điện I": f"{i} A"
+            }
+            output_results = {
+                "Điện trở R": f"{r:.3f} Ω"
+            }
+            formula_latex = r"R = \frac{\Delta U}{I}"
+            formula_explanation = "Công thức tính điện trở từ sụt áp và dòng điện."
+            pdf_bytes = create_pdf("ĐIỆN TRỞ (TỪ ΔU & I)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
+            st.session_state['pdf_bytes_du_i_r'] = pdf_bytes
+            st.session_state['pdf_filename_du_i_r'] = f"Phieu_tinh_R_tu_DU_I_{datetime.now().strftime('%Y%m%d')}.pdf"
+        if 'pdf_bytes_du_i_r' in st.session_state and st.session_state['pdf_bytes_du_i_r']:
+            st.markdown("---")
+            col_pdf1_du_i_r, col_pdf2_du_i_r = st.columns(2)
+            with col_pdf1_du_i_r:
+                st.download_button(label="Xuất PDF", data=st.session_state['pdf_bytes_du_i_r'], file_name=st.session_state['pdf_filename_du_i_r'], mime="application/pdf", key="download_du_i_r_pdf")
+            with col_pdf2_du_i_r:
+                pdf_base64_du_i_r = base64.b64encode(st.session_state['pdf_bytes_du_i_r']).decode('utf-8')
+                st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_du_i_r}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
+    elif cong_thuc == "Ptt & I → R":
+        st.latex(r"R = \frac{P_{tt}}{I^2}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( R \): Điện trở (Ω)
+        - \( P_{tt} \): Tổn thất công suất (W)
+        - \( I \): Dòng điện (A)
+        
+        **Mục đích:** Tính toán điện trở của một đoạn mạch khi biết tổn thất công suất và dòng điện.
+        """, unsafe_allow_html=True)
+        ptt = st.number_input("Ptt (W):", min_value=0.0, key="ptt_i_r_ptt")
+        i = st.number_input("I (A):", min_value=0.0, key="ptt_i_r_i")
+        r = ptt / (i**2) if i != 0 else 0
+        if st.button("Tính R", key="btn_calc_ptt_i_r"):
+            st.success(f"R ≈ {r:.3f} Ω")
+            calculator_info = {
+                'name': calculator_name_ct,
+                'title': calculator_title_ct,
+                'phone': calculator_phone_ct
+            }
+            customer_info = {
+                'name': customer_name_ct,
+                'address': customer_address_ct,
+                'phone': customer_phone_ct
+            }
+            input_params = {
+                "Tổn thất công suất Ptt": f"{ptt} W",
+                "Dòng điện I": f"{i} A"
+            }
+            output_results = {
+                "Điện trở R": f"{r:.3f} Ω"
+            }
+            formula_latex = r"R = \frac{P_{tt}}{I^2}"
+            formula_explanation = "Công thức tính điện trở từ tổn thất công suất và dòng điện."
+            pdf_bytes = create_pdf("ĐIỆN TRỞ (TỪ Ptt & I)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
+            st.session_state['pdf_bytes_ptt_i_r'] = pdf_bytes
+            st.session_state['pdf_filename_ptt_i_r'] = f"Phieu_tinh_R_tu_Ptt_I_{datetime.now().strftime('%Y%m%d')}.pdf"
+        if 'pdf_bytes_ptt_i_r' in st.session_state and st.session_state['pdf_bytes_ptt_i_r']:
+            st.markdown("---")
+            col_pdf1_ptt_i_r, col_pdf2_ptt_i_r = st.columns(2)
+            with col_pdf1_ptt_i_r:
+                st.download_button(label="Xuất PDF", data=st.session_state['pdf_bytes_ptt_i_r'], file_name=st.session_state['pdf_filename_ptt_i_r'], mime="application/pdf", key="download_ptt_i_r_pdf")
+            with col_pdf2_ptt_i_r:
+                pdf_base64_ptt_i_r = base64.b64encode(st.session_state['pdf_bytes_ptt_i_r']).decode('utf-8')
+                st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_ptt_i_r}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
+    elif cong_thuc == "ΔU & R → I":
+        st.latex(r"I = \frac{\Delta U}{R}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( I \): Dòng điện (A)
+        - \( \Delta U \): Sụt áp (V)
+        - \( R \): Điện trở (Ω)
+        
+        **Mục đích:** Tính toán dòng điện trong một đoạn mạch khi biết sụt áp và điện trở.
+        """, unsafe_allow_html=True)
+        u = st.number_input("ΔU (V):", min_value=0.0, key="du_r_i_u")
+        r = st.number_input("R (Ω):", min_value=0.0, key="du_r_i_r")
+        i = u / r if r != 0 else 0
+        if st.button("Tính I", key="btn_calc_du_r_i"):
+            st.success(f"I ≈ {i:.3f} A")
+            calculator_info = {
+                'name': calculator_name_ct,
+                'title': calculator_title_ct,
+                'phone': calculator_phone_ct
+            }
+            customer_info = {
+                'name': customer_name_ct,
+                'address': customer_address_ct,
+                'phone': customer_phone_ct
+            }
+            input_params = {
+                "Sụt áp ΔU": f"{u} V",
+                "Điện trở R": f"{r} Ω"
+            }
+            output_results = {
+                "Dòng điện I": f"{i:.3f} A"
+            }
+            formula_latex = r"I = \frac{\Delta U}{R}"
+            formula_explanation = "Công thức tính dòng điện từ sụt áp và điện trở."
+            pdf_bytes = create_pdf("DÒNG ĐIỆN (TỪ ΔU & R)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
+            st.session_state['pdf_bytes_du_r_i'] = pdf_bytes
+            st.session_state['pdf_filename_du_r_i'] = f"Phieu_tinh_I_tu_DU_R_{datetime.now().strftime('%Y%m%d')}.pdf"
+        if 'pdf_bytes_du_r_i' in st.session_state and st.session_state['pdf_bytes_du_r_i']:
+            st.markdown("---")
+            col_pdf1_du_r_i, col_pdf2_du_r_i = st.columns(2)
+            with col_pdf1_du_r_i:
+                st.download_button(label="Xuất PDF", data=st.session_state['pdf_bytes_du_r_i'], file_name=st.session_state['pdf_filename_du_r_i'], mime="application/pdf", key="download_du_r_i_pdf")
+            with col_pdf2_du_r_i:
+                pdf_base64_du_r_i = base64.b64encode(st.session_state['pdf_bytes_du_r_i']).decode('utf-8')
+                st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_du_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
+    elif cong_thuc == "Ptt & R → I":
+        st.latex(r"I = \sqrt{\frac{P_{tt}}{R}}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( I \): Dòng điện (A)
+        - \( P_{tt} \): Tổn thất công suất (W)
+        - \( R \): Điện trở (Ω)
+        
+        **Mục đích:** Tính toán dòng điện trong một đoạn mạch khi biết tổn thất công suất và điện trở.
+        """, unsafe_allow_html=True)
+        ptt = st.number_input("Ptt (W):", min_value=0.0, key="ptt_r_i_ptt")
+        r = st.number_input("R (Ω):", min_value=0.0, key="ptt_r_i_r")
+        i = math.sqrt(ptt / r) if r != 0 and ptt >= 0 else 0 # Ensure ptt is non-negative for sqrt
+        if st.button("Tính I", key="btn_calc_ptt_r_i"):
+            st.success(f"I ≈ {i:.3f} A")
+            calculator_info = {
+                'name': calculator_name_ct,
+                'title': calculator_title_ct,
+                'phone': calculator_phone_ct
+            }
+            customer_info = {
+                'name': customer_name_ct,
+                'address': customer_address_ct,
+                'phone': customer_phone_ct
+            }
+            input_params = {
+                "Tổn thất công suất Ptt": f"{ptt} W",
+                "Điện trở R": f"{r} Ω"
+            }
+            output_results = {
+                "Dòng điện I": f"{i:.3f} A"
+            }
+            formula_latex = r"I = \sqrt{\frac{P_{tt}}{R}}"
+            formula_explanation = "Công thức tính dòng điện từ tổn thất công suất và điện trở."
+            pdf_bytes = create_pdf("DÒNG ĐIỆN (TỪ Ptt & R)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
+            st.session_state['pdf_bytes_ptt_r_i'] = pdf_bytes
+            st.session_state['pdf_filename_ptt_r_i'] = f"Phieu_tinh_I_tu_Ptt_R_{datetime.now().strftime('%Y%m%d')}.pdf"
+        if 'pdf_bytes_ptt_r_i' in st.session_state and st.session_state['pdf_bytes_ptt_r_i']:
+            st.markdown("---")
+            col_pdf1_ptt_r_i, col_pdf2_ptt_r_i = st.columns(2)
+            with col_pdf1_ptt_r_i:
+                st.download_button(label="Xuất PDF", data=st.session_state['pdf_bytes_ptt_r_i'], file_name=st.session_state['pdf_filename_ptt_r_i'], mime="application/pdf", key="download_ptt_r_i_pdf")
+            with col_pdf2_ptt_r_i:
+                pdf_base64_ptt_r_i = base64.b64encode(st.session_state['pdf_bytes_ptt_r_i']).decode('utf-8')
+                st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_ptt_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
