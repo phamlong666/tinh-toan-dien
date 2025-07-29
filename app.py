@@ -136,13 +136,14 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
 
     try:
         # Increased font sizes for better readability
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=17, alignment=1, spaceAfter=10)) 
+        # Changed font size from 17 to 15 to prevent text overflow
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=15, alignment=1, spaceAfter=10)) 
         styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=14, spaceAfter=5)) 
         styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=12, spaceAfter=4)) 
         styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=11, alignment=0, leading=13)) # Increased font size and leading
         styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=11, alignment=0, leading=13)) # Increased font size and leading
     except KeyError:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=17, alignment=1, spaceAfter=10))
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=10)) # Changed font size here too
         styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=14, spaceAfter=5))
         styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=12, spaceAfter=4))
         styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=11, alignment=0, leading=13))
@@ -1528,7 +1529,7 @@ elif main_menu == "Tính toán điện":
                     """,
                     unsafe_allow_html=True
                 )
-                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
 
     elif sub_menu_tinh_toan == "Tính công suất cosφ": # New section for cosφ calculation
         st.header("⚡ Tính công suất cosφ")
@@ -1588,7 +1589,7 @@ elif main_menu == "Tính toán điện":
 
                 # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
                 st.markdown("---")
-                st.markdown("📘 **Tham khảo biểu đồ công suất phản kháng:**")
+                st.markdown("📘 **Tham khảo hệ số công suất phản kháng theo Thông tư 15/2014/TT-BCT:**")
                 try:
                     with open("Muabancongsuatphankhang.jpg", "rb") as f:
                         st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
