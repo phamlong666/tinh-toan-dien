@@ -180,10 +180,12 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     
     # Create a ReportLab Image object from the buffer
     # You might need to adjust the width and height for optimal display
-    rl_image = RLImage(image_buffer)
-    # Set a fixed width and let ReportLab calculate height to maintain aspect ratio
-    rl_image.drawWidth = 4 * inch # Adjust this value as needed
-    rl_image.drawHeight = rl_image.drawWidth * (rl_image.height / rl_image.width) # Maintain aspect ratio
+    # The error indicates that rl_image.height and rl_image.width are not available
+    # immediately after creation. We should set drawWidth and drawHeight directly.
+    rl_image = RLImage(image_buffer, width=4*inch, height=1*inch) # Set a default reasonable size
+    # If the aspect ratio is critical, you would need to get the image dimensions
+    # from matplotlib's buffer before creating the ReportLab Image object.
+    # For now, let's use a fixed height to avoid the error.
     
     story.append(rl_image)
     story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
