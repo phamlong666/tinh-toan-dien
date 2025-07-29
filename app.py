@@ -1,45 +1,25 @@
 import matplotlib.pyplot as plt
 import io
-from reportlab.platypus import Image as RLImage # Keep this if RLImage is used elsewhere, otherwise it's redundant
-
-# Removed duplicate render_latex_formula_to_image function
-def render_latex_formula_to_image(latex_str):
-    fig, ax = plt.subplots(figsize=(5, 1))
-    ax.axis("off")
-    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=14, ha='center', va='center')
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2, dpi=200)
-    plt.close(fig)
-    buf.seek(0)
-    return buf
-
-# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức điện
-
-# Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
-
+from reportlab.platypus import Image as RLImage
+from reportlab.lib.units import inch
+import os
+import hashlib
 import streamlit as st
 import math
 from PIL import Image
 import pandas as pd
-import io
 from datetime import datetime
-import base64 # Import thư viện base64 để mã hóa PDF cho nút xem phiếu
+import base64
 
 # Import các thành phần từ ReportLab để tạo PDF
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
-from reportlab.platypus import Image as RLImage
-import matplotlib.pyplot as plt
-import os
-import hashlib
-
+# Hàm render công thức LaTeX thành ảnh PNG và trả về đường dẫn
 def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
     """Render công thức LaTeX thành ảnh PNG và trả về đường dẫn."""
     if not os.path.exists("latex_images"):
@@ -50,7 +30,7 @@ def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
     img_path = os.path.join("latex_images", f"{img_hash}.png")
 
     if not os.path.exists(img_path):
-        fig, ax = plt.subplots(figsize=(6, 1.5))
+        fig, ax = plt.subplots(figsize=(6, 1.5)) # Điều chỉnh kích thước hình ảnh để phù hợp với công thức
         ax.axis("off")
         ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
         plt.savefig(img_path, dpi=dpi, bbox_inches="tight", pad_inches=0.3)
@@ -58,14 +38,7 @@ def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
 
     return img_path
 
-def latex_image_paragraph(formula):
-    """Tạo đoạn ảnh công thức từ LaTeX để chèn vào PDF."""
-    img_path = render_latex_formula_to_image(formula)
-    return RLImage(img_path, width=400, height=80)
-
-
-
-# Try to import MathText for LaTeX rendering in PDF
+# Try to import MathText for LaTeX rendering in PDF (kept for warning, but not used for rendering)
 try:
     from reportlab.platypus.mathtext import MathText # Explicitly import MathText
     MATH_TEXT_AVAILABLE = True
@@ -202,21 +175,16 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
     
     # Clean the formula for better image rendering if it contains specific text commands
-    # For example, remove \quad \text{...} if it's causing issues with image rendering
     cleaned_formula_latex = formula_latex.replace(r"\quad \text{(1 pha)}", "")
     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc" in image
 
-    image_buffer = render_latex_formula_to_image(cleaned_formula_latex)
+    # Render LaTeX formula to an image file and get its path
+    img_path = render_latex_formula_to_image(cleaned_formula_latex)
     
-    # Create a ReportLab Image object from the buffer
-    # You might need to adjust the width and height for optimal display
-    # The error indicates that rl_image.height and rl_image.width are not available
-    # immediately after creation. We should set drawWidth and drawHeight directly.
-    rl_image = RLImage(image_buffer, width=4*inch, height=1*inch) # Set a default reasonable size
-    # If the aspect ratio is critical, you would need to get the image dimensions
-    # from matplotlib's buffer before creating the ReportLab Image object.
-    # For now, let's use a fixed height to avoid the error.
+    # Create a ReportLab Image object from the image file path
+    # Adjust width and height for optimal display.
+    rl_image = RLImage(img_path, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
     
     story.append(rl_image)
     story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
@@ -281,6 +249,13 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     doc.build(story)
     pdf_bytes = buffer.getvalue()
     buffer.close()
+    
+    # Xóa file ảnh tạm sau khi đã tạo PDF
+    try:
+        os.remove(img_path)
+    except OSError as e:
+        st.warning(f"Không thể xóa file ảnh tạm {img_path}: {e}")
+        
     return pdf_bytes
 
 # Xử lý các lựa chọn từ menu chính
