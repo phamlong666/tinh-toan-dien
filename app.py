@@ -1,3 +1,14 @@
+
+def render_latex_to_image(formula: str, output_path: str):
+    import matplotlib.pyplot as plt
+    from matplotlib import rc
+    rc('mathtext', fontset='cm')
+    fig = plt.figure(figsize=(4, 0.5), dpi=200)
+    fig.text(0.5, 0.5, f"${formula}$", horizontalalignment='center', verticalalignment='center', fontsize=16)
+    plt.axis('off')
+    plt.savefig(output_path, bbox_inches='tight', pad_inches=0.1, transparent=True)
+    plt.close()
+
 import matplotlib
 matplotlib.use('Agg') # Thiết lập backend không tương tác cho Matplotlib
 import matplotlib.pyplot as plt
