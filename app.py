@@ -251,12 +251,14 @@ elif main_menu == "Tính toán điện":
     sub_menu_tinh_toan = st.sidebar.selectbox("Chọn loại tính toán:", [
         "Tính dòng điện (I)",
         "Tính công suất (P)",
+        "Tính công suất biểu kiến (S)", # Added new option
+        "Tính công suất phản kháng (Q)", # Added new option
         "Tính sụt áp (ΔU)",
         "Chọn tiết diện dây dẫn",
         "Chiều dài dây tối đa (ΔU%)",
         "Tính điện trở – kháng – trở kháng",
         "Tính tổn thất công suất trên dây",
-        "Tính công suất cosφ", # Added new option
+        "Tính công suất cosφ",
         "Chọn thiết bị bảo vệ"
     ])
 
@@ -459,6 +461,306 @@ elif main_menu == "Tính toán điện":
                 st.markdown(
                     f"""
                     <a href="data:application/pdf;base64,{pdf_base64_p}" target="_blank" style="text-decoration: none;">
+                        <button style="
+                            background-color: #007bff;
+                            border: none;
+                            color: white;
+                            padding: 10px 24px;
+                            text-align: center;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-size: 16px;
+                            margin: 4px 2px;
+                            cursor: pointer;
+                            border-radius: 8px;
+                        ">Xem phiếu</button>
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
+    elif sub_menu_tinh_toan == "Tính công suất biểu kiến (S)":
+        st.header("⚡ Tính công suất biểu kiến (S)")
+        st.latex(r"S = \sqrt{P^2 + Q^2}")
+        st.latex(r"S = U \cdot I \quad \text{(1 pha)}")
+        st.latex(r"S = \sqrt{3} \cdot U \cdot I \quad \text{(3 pha)}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( S \): Công suất biểu kiến (kVA)
+        - \( P \): Công suất tác dụng (kW)
+        - \( Q \): Công suất phản kháng (kVAR)
+        - \( U \): Điện áp (V)
+        - \( I \): Dòng điện (A)
+        
+        **Mục đích:** Tính toán tổng công suất của hệ thống điện, bao gồm cả công suất tác dụng và công suất phản kháng.
+        """, unsafe_allow_html=True)
+
+        st.subheader("Thông tin Người tính toán")
+        calculator_name_s = st.text_input("Họ và tên:", value="Hà Thị Lê", key="calc_name_s")
+        calculator_title_s = st.text_input("Chức danh:", value="Tổ trưởng tổ KDDV", key="calc_title_s")
+        calculator_phone_s = st.text_input("Số điện thoại:", value="0978578777", key="calc_phone_s")
+
+        st.subheader("Thông tin Khách hàng")
+        customer_name_s = st.text_input("Tên khách hàng:", value="Phạm Hồng Long", key="cust_name_s")
+        customer_address_s = st.text_input("Địa chỉ:", value="xã Định Hóa, tỉnh Thái Nguyên", key="cust_address_s")
+        customer_phone_s = st.text_input("Số điện thoại khách hàng:", value="0968552888", key="cust_phone_s")
+        
+        current_date_s = datetime.now().strftime("Ngày %d tháng %m năm %Y")
+        st.markdown(f"**Thời gian lập phiếu:** {current_date_s}")
+
+        s_calc_method = st.radio(
+            "Chọn phương pháp tính S:",
+            ["Từ P, Q", "Từ U, I"],
+            key="s_calc_method"
+        )
+
+        S_result = 0.0
+        input_params_s = {}
+        formula_latex_s = ""
+        formula_explanation_s = ""
+
+        if s_calc_method == "Từ P, Q":
+            col1, col2 = st.columns(2)
+            with col1:
+                P_s_pq = st.number_input("Công suất tác dụng P (kW):", min_value=0.0, key="P_s_pq")
+            with col2:
+                Q_s_pq = st.number_input("Công suất phản kháng Q (kVAR):", min_value=0.0, key="Q_s_pq")
+            
+            if st.button("Tính S (từ P, Q)", key="btn_calc_s_pq"):
+                S_result = math.sqrt(P_s_pq**2 + Q_s_pq**2)
+                st.success(f"Công suất biểu kiến S ≈ {S_result:.2f} kVA")
+                input_params_s = {
+                    "Công suất tác dụng P": f"{P_s_pq} kW",
+                    "Công suất phản kháng Q": f"{Q_s_pq} kVAR"
+                }
+                formula_latex_s = r"S = \sqrt{P^2 + Q^2}"
+                formula_explanation_s = "Công thức tính công suất biểu kiến từ công suất tác dụng và công suất phản kháng."
+
+        elif s_calc_method == "Từ U, I":
+            col1, col2 = st.columns(2)
+            with col1:
+                pha_s_ui = st.radio("Loại điện:", ["1 pha", "3 pha"], key="pha_s_ui")
+                U_s_ui = st.number_input("Điện áp U (V):", min_value=0.0, key="U_s_ui")
+            with col2:
+                I_s_ui = st.number_input("Dòng điện I (A):", min_value=0.0, key="I_s_ui")
+            
+            if st.button("Tính S (từ U, I)", key="btn_calc_s_ui"):
+                if U_s_ui != 0 and I_s_ui != 0:
+                    if pha_s_ui == "1 pha":
+                        S_result = (U_s_ui * I_s_ui) / 1000
+                    elif pha_s_ui == "3 pha":
+                        S_result = (math.sqrt(3) * U_s_ui * I_s_ui) / 1000
+                st.success(f"Công suất biểu kiến S ≈ {S_result:.2f} kVA")
+                input_params_s = {
+                    "Loại điện": pha_s_ui,
+                    "Điện áp U": f"{U_s_ui} V",
+                    "Dòng điện I": f"{I_s_ui} A"
+                }
+                formula_latex_s = r"S = U \cdot I \quad \text{(1 pha)} \quad \text{hoặc} \quad S = \sqrt{3} \cdot U \cdot I \quad \text{(3 pha)}"
+                formula_explanation_s = "Công thức tính công suất biểu kiến từ điện áp và dòng điện cho hệ thống 1 pha hoặc 3 pha."
+
+        if S_result != 0.0: # Only generate PDF if a calculation was performed
+            calculator_info = {
+                'name': calculator_name_s,
+                'title': calculator_title_s,
+                'phone': calculator_phone_s
+            }
+            customer_info = {
+                'name': customer_name_s,
+                'address': customer_address_s,
+                'phone': customer_phone_s
+            }
+            output_results = {
+                "Công suất biểu kiến S": f"{S_result:.2f} kVA"
+            }
+
+            pdf_bytes = create_pdf(f"CÔNG SUẤT BIỂU KIẾN (S) ({s_calc_method.replace('Từ ', '')})", formula_latex_s, formula_explanation_s, input_params_s, output_results, calculator_info, customer_info)
+            st.session_state['pdf_bytes_s'] = pdf_bytes
+            st.session_state['pdf_filename_s'] = f"Phieu_tinh_cong_suat_bieu_kien_{datetime.now().strftime('%Y%m%d')}.pdf"
+
+        if 'pdf_bytes_s' in st.session_state and st.session_state['pdf_bytes_s']:
+            st.markdown("---")
+            st.subheader("Tùy chọn xuất phiếu công suất biểu kiến")
+            col_pdf1_s, col_pdf2_s = st.columns(2)
+            with col_pdf1_s:
+                st.download_button(
+                    label="Xuất PDF",
+                    data=st.session_state['pdf_bytes_s'],
+                    file_name=st.session_state['pdf_filename_s'],
+                    mime="application/pdf",
+                    key="download_s_pdf"
+                )
+            with col_pdf2_s:
+                pdf_base64_s = base64.b64encode(st.session_state['pdf_bytes_s']).decode('utf-8')
+                st.markdown(
+                    f"""
+                    <a href="data:application/pdf;base64,{pdf_base64_s}" target="_blank" style="text-decoration: none;">
+                        <button style="
+                            background-color: #007bff;
+                            border: none;
+                            color: white;
+                            padding: 10px 24px;
+                            text-align: center;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-size: 16px;
+                            margin: 4px 2px;
+                            cursor: pointer;
+                            border-radius: 8px;
+                        ">Xem phiếu</button>
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
+    elif sub_menu_tinh_toan == "Tính công suất phản kháng (Q)":
+        st.header("⚡ Tính công suất phản kháng (Q)")
+        st.latex(r"Q = \sqrt{S^2 - P^2}")
+        st.latex(r"Q = P \cdot \tan(\arccos(\cos\varphi))")
+        st.latex(r"Q = U \cdot I \cdot \sin\varphi \quad \text{(1 pha)}")
+        st.latex(r"Q = \sqrt{3} \cdot U \cdot I \cdot \sin\varphi \quad \text{(3 pha)}")
+        st.markdown("""
+        **Giải thích các thành phần:**
+        - \( Q \): Công suất phản kháng (kVAR)
+        - \( S \): Công suất biểu kiến (kVA)
+        - \( P \): Công suất tác dụng (kW)
+        - \( \cos\varphi \): Hệ số công suất
+        - \( U \): Điện áp (V)
+        - \( I \): Dòng điện (A)
+        - \( \sin\varphi \): Sin của góc lệch pha
+        
+        **Mục đích:** Tính toán công suất phản kháng, cần thiết cho việc bù công suất phản kháng để cải thiện hệ số công suất.
+        """, unsafe_allow_html=True)
+
+        st.subheader("Thông tin Người tính toán")
+        calculator_name_q = st.text_input("Họ và tên:", value="Hà Thị Lê", key="calc_name_q")
+        calculator_title_q = st.text_input("Chức danh:", value="Tổ trưởng tổ KDDV", key="calc_title_q")
+        calculator_phone_q = st.text_input("Số điện thoại:", value="0978578777", key="calc_phone_q")
+
+        st.subheader("Thông tin Khách hàng")
+        customer_name_q = st.text_input("Tên khách hàng:", value="Phạm Hồng Long", key="cust_name_q")
+        customer_address_q = st.text_input("Địa chỉ:", value="xã Định Hóa, tỉnh Thái Nguyên", key="cust_address_q")
+        customer_phone_q = st.text_input("Số điện thoại khách hàng:", value="0968552888", key="cust_phone_q")
+        
+        current_date_q = datetime.now().strftime("Ngày %d tháng %m năm %Y")
+        st.markdown(f"**Thời gian lập phiếu:** {current_date_q}")
+
+        q_calc_method = st.radio(
+            "Chọn phương pháp tính Q:",
+            ["Từ P, S", "Từ P, cosφ", "Từ U, I, sinφ"],
+            key="q_calc_method"
+        )
+
+        Q_result = 0.0
+        input_params_q = {}
+        formula_latex_q = ""
+        formula_explanation_q = ""
+
+        if q_calc_method == "Từ P, S":
+            col1, col2 = st.columns(2)
+            with col1:
+                P_q_ps = st.number_input("Công suất tác dụng P (kW):", min_value=0.0, key="P_q_ps")
+            with col2:
+                S_q_ps = st.number_input("Công suất biểu kiến S (kVA):", min_value=0.0, key="S_q_ps")
+            
+            if st.button("Tính Q (từ P, S)", key="btn_calc_q_ps"):
+                if S_q_ps >= P_q_ps:
+                    Q_result = math.sqrt(S_q_ps**2 - P_q_ps**2)
+                else:
+                    st.warning("Công suất biểu kiến (S) phải lớn hơn hoặc bằng Công suất tác dụng (P).")
+                st.success(f"Công suất phản kháng Q ≈ {Q_result:.2f} kVAR")
+                input_params_q = {
+                    "Công suất tác dụng P": f"{P_q_ps} kW",
+                    "Công suất biểu kiến S": f"{S_q_ps} kVA"
+                }
+                formula_latex_q = r"Q = \sqrt{S^2 - P^2}"
+                formula_explanation_q = "Công thức tính công suất phản kháng từ công suất biểu kiến và công suất tác dụng."
+
+        elif q_calc_method == "Từ P, cosφ":
+            col1, col2 = st.columns(2)
+            with col1:
+                P_q_pc = st.number_input("Công suất tác dụng P (kW):", min_value=0.0, key="P_q_pc")
+            with col2:
+                cos_phi_q_pc = st.slider("Hệ số cosφ:", 0.001, 1.0, 0.8, key="cos_phi_q_pc") # Min value > 0 to avoid division by zero
+            
+            if st.button("Tính Q (từ P, cosφ)", key="btn_calc_q_pc"):
+                if cos_phi_q_pc > 0:
+                    # Calculate tan(phi)
+                    tan_phi = math.sqrt(1 / (cos_phi_q_pc**2) - 1)
+                    Q_result = P_q_pc * tan_phi
+                else:
+                    Q_result = 0 # If cosphi is 0, Q is undefined or infinite for P>0
+                st.success(f"Công suất phản kháng Q ≈ {Q_result:.2f} kVAR")
+                input_params_q = {
+                    "Công suất tác dụng P": f"{P_q_pc} kW",
+                    "Hệ số cosφ": cos_phi_q_pc
+                }
+                formula_latex_q = r"Q = P \cdot \tan(\arccos(\cos\varphi))"
+                formula_explanation_q = "Công thức tính công suất phản kháng từ công suất tác dụng và hệ số công suất."
+
+        elif q_calc_method == "Từ U, I, sinφ":
+            col1, col2 = st.columns(2)
+            with col1:
+                pha_q_uis = st.radio("Loại điện:", ["1 pha", "3 pha"], key="pha_q_uis")
+                U_q_uis = st.number_input("Điện áp U (V):", min_value=0.0, key="U_q_uis")
+            with col2:
+                I_q_uis = st.number_input("Dòng điện I (A):", min_value=0.0, key="I_q_uis")
+                sin_phi_q_uis = st.slider("Hệ số sinφ:", 0.0, 1.0, 0.6, key="sin_phi_q_uis") # sin(arccos(0.8)) approx 0.6
+            
+            if st.button("Tính Q (từ U, I, sinφ)", key="btn_calc_q_uis"):
+                if U_q_uis != 0 and I_q_uis != 0:
+                    if pha_q_uis == "1 pha":
+                        Q_result = (U_q_uis * I_q_uis * sin_phi_q_uis) / 1000
+                    elif pha_q_uis == "3 pha":
+                        Q_result = (math.sqrt(3) * U_q_uis * I_q_uis * sin_phi_q_uis) / 1000
+                st.success(f"Công suất phản kháng Q ≈ {Q_result:.2f} kVAR")
+                input_params_q = {
+                    "Loại điện": pha_q_uis,
+                    "Điện áp U": f"{U_q_uis} V",
+                    "Dòng điện I": f"{I_q_uis} A",
+                    "Hệ số sinφ": sin_phi_q_uis
+                }
+                formula_latex_q = r"Q = U \cdot I \cdot \sin\varphi \quad \text{(1 pha)} \quad \text{hoặc} \quad Q = \sqrt{3} \cdot U \cdot I \cdot \sin\varphi \quad \text{(3 pha)}"
+                formula_explanation_q = "Công thức tính công suất phản kháng từ điện áp, dòng điện và sin của góc lệch pha."
+
+        if Q_result != 0.0: # Only generate PDF if a calculation was performed
+            calculator_info = {
+                'name': calculator_name_q,
+                'title': calculator_title_q,
+                'phone': calculator_phone_q
+            }
+            customer_info = {
+                'name': customer_name_q,
+                'address': customer_address_q,
+                'phone': customer_phone_q
+            }
+            output_results = {
+                "Công suất phản kháng Q": f"{Q_result:.2f} kVAR"
+            }
+
+            pdf_bytes = create_pdf(f"CÔNG SUẤT PHẢN KHÁNG (Q) ({q_calc_method.replace('Từ ', '')})", formula_latex_q, formula_explanation_q, input_params_q, output_results, calculator_info, customer_info)
+            st.session_state['pdf_bytes_q'] = pdf_bytes
+            st.session_state['pdf_filename_q'] = f"Phieu_tinh_cong_suat_phan_khang_{datetime.now().strftime('%Y%m%d')}.pdf"
+
+        if 'pdf_bytes_q' in st.session_state and st.session_state['pdf_bytes_q']:
+            st.markdown("---")
+            st.subheader("Tùy chọn xuất phiếu công suất phản kháng")
+            col_pdf1_q, col_pdf2_q = st.columns(2)
+            with col_pdf1_q:
+                st.download_button(
+                    label="Xuất PDF",
+                    data=st.session_state['pdf_bytes_q'],
+                    file_name=st.session_state['pdf_filename_q'],
+                    mime="application/pdf",
+                    key="download_q_pdf"
+                )
+            with col_pdf2_q:
+                pdf_base64_q = base64.b64encode(st.session_state['pdf_bytes_q']).decode('utf-8')
+                st.markdown(
+                    f"""
+                    <a href="data:application/pdf;base64,{pdf_base64_q}" target="_blank" style="text-decoration: none;">
                         <button style="
                             background-color: #007bff;
                             border: none;
@@ -1314,7 +1616,7 @@ elif main_menu == "Tính toán điện":
                     st.download_button(
                         label="Xuất PDF",
                         data=st.session_state['pdf_bytes_cosphi_pui'],
-                        file_name=st.session_state['pdf_filename_cosphi_pui'],
+                        file_name=st.session_state['pdf_filename_pui'],
                         mime="application/pdf",
                         key="download_cosphi_pui_pdf"
                     )
@@ -1402,7 +1704,7 @@ elif main_menu == "Tính toán điện":
                     st.download_button(
                         label="Xuất PDF",
                         data=st.session_state['pdf_bytes_cosphi_pq'],
-                        file_name=st.session_state['pdf_filename_cosphi_pq'],
+                        file_name=st.session_state['pdf_filename_pq'],
                         mime="application/pdf",
                         key="download_cosphi_pq_pdf"
                     )
