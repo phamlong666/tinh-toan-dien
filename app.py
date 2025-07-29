@@ -528,6 +528,10 @@ elif main_menu == "Tính toán điện":
                 Q_s_pq = st.number_input("Công suất phản kháng Q (kVAR):", min_value=0.0, key="Q_s_pq")
             
             if st.button("Tính S (từ P, Q)", key="btn_calc_s_pq"):
+                if S_q_ps >= P_q_ps:
+                    Q_result = math.sqrt(S_q_ps**2 - P_q_ps**2)
+                else:
+                    st.warning("Công suất biểu kiến (S) phải lớn hơn hoặc bằng Công suất tác dụng (P).")
                 S_result = math.sqrt(P_s_pq**2 + Q_s_pq**2)
                 st.success(f"Công suất biểu kiến S ≈ {S_result:.2f} kVA")
                 input_params_s = {
@@ -1627,7 +1631,7 @@ elif main_menu == "Tính toán điện":
                     st.download_button(
                         label="Xuất PDF",
                         data=st.session_state['pdf_bytes_cosphi_pui'],
-                        file_name=st.session_state['pdf_filename_pui'],
+                        file_name=st.session_state['pdf_filename_cosphi_pui'], # Corrected filename key
                         mime="application/pdf",
                         key="download_cosphi_pui_pdf"
                     )
@@ -1718,7 +1722,8 @@ elif main_menu == "Tính toán điện":
                 st.session_state['pdf_bytes_cosphi_pq'] = pdf_bytes
                 st.session_state['pdf_filename_cosphi_pq'] = f"Phieu_tinh_cosphi_PQ_{datetime.now().strftime('%Y%m%d')}.pdf"
 
-            if 'pdf_bytes_cosphi_pq' in st.session_state and st.session_state['pdf_bytes_pq']:
+            # FIX: Changed 'pdf_bytes_pq' to 'pdf_bytes_cosphi_pq'
+            if 'pdf_bytes_cosphi_pq' in st.session_state and st.session_state['pdf_bytes_cosphi_pq']:
                 st.markdown("---")
                 st.subheader("Tùy chọn xuất phiếu hệ số công suất (từ P, Q)")
                 col_pdf1_cosphi_pq, col_pdf2_cosphi_pq = st.columns(2)
@@ -1726,7 +1731,7 @@ elif main_menu == "Tính toán điện":
                     st.download_button(
                         label="Xuất PDF",
                         data=st.session_state['pdf_bytes_cosphi_pq'],
-                        file_name=st.session_state['pdf_filename_pq'],
+                        file_name=st.session_state['pdf_filename_cosphi_pq'], # Corrected filename key
                         mime="application/pdf",
                         key="download_cosphi_pq_pdf"
                     )
