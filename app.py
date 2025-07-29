@@ -1582,6 +1582,17 @@ elif main_menu == "Tính toán điện":
                 
                 st.success(f"Hệ số công suất cosφ ≈ {cosphi_result:.3f}")
 
+                # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
+                st.markdown("---")
+                st.markdown("📘 **Tham khảo biểu đồ công suất phản kháng:**")
+                try:
+                    with open("Muabancongsuatphankhang.jpg", "rb") as f:
+                        st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
+                except FileNotFoundError:
+                    st.warning("⚠️ Không tìm thấy file ảnh 'Muabancongsuatphankhang.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                except Exception as e:
+                    st.error(f"❌ Có lỗi xảy ra khi tải ảnh công suất phản kháng: {e}")
+
                 calculator_info = {
                     'name': calculator_name_cosphi,
                     'title': calculator_title_cosphi,
@@ -1672,6 +1683,17 @@ elif main_menu == "Tính toán điện":
                 
                 st.success(f"Hệ số công suất cosφ ≈ {cosphi_result_pq:.3f}")
 
+                # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
+                st.markdown("---")
+                st.markdown("📘 **Tham khảo biểu đồ công suất phản kháng:**")
+                try:
+                    with open("Muabancongsuatphankhang.jpg", "rb") as f:
+                        st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
+                except FileNotFoundError:
+                    st.warning("⚠️ Không tìm thấy file ảnh 'Muabancongsuatphankhang.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                except Exception as e:
+                    st.error(f"❌ Có lỗi xảy ra khi tải ảnh công suất phản kháng: {e}")
+
                 calculator_info = {
                     'name': calculator_name_cosphi,
                     'title': calculator_title_cosphi,
@@ -1696,7 +1718,7 @@ elif main_menu == "Tính toán điện":
                 st.session_state['pdf_bytes_cosphi_pq'] = pdf_bytes
                 st.session_state['pdf_filename_cosphi_pq'] = f"Phieu_tinh_cosphi_PQ_{datetime.now().strftime('%Y%m%d')}.pdf"
 
-            if 'pdf_bytes_cosphi_pq' in st.session_state and st.session_state['pdf_bytes_cosphi_pq']:
+            if 'pdf_bytes_cosphi_pq' in st.session_state and st.session_state['pdf_bytes_pq']:
                 st.markdown("---")
                 st.subheader("Tùy chọn xuất phiếu hệ số công suất (từ P, Q)")
                 col_pdf1_cosphi_pq, col_pdf2_cosphi_pq = st.columns(2)
@@ -2002,3 +2024,4 @@ elif main_menu == "Công thức điện":
                 pdf_base64_ptt_r_i = base64.b64encode(st.session_state['pdf_bytes_ptt_r_i']).decode('utf-8')
                 st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_ptt_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
                 st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
