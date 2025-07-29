@@ -3,7 +3,7 @@ import io
 from reportlab.platypus import Image as RLImage
 from reportlab.lib.units import inch
 import os
-import hashlib
+import hashlib # Thư viện này không còn cần thiết cho việc tạo hash file tạm
 import streamlit as st
 import math
 from PIL import Image
@@ -19,24 +19,17 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# Hàm render công thức LaTeX thành ảnh PNG và trả về đường dẫn
+# Hàm render công thức LaTeX thành ảnh PNG và trả về một đối tượng BytesIO
 def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
-    """Render công thức LaTeX thành ảnh PNG và trả về đường dẫn."""
-    if not os.path.exists("latex_images"):
-        os.makedirs("latex_images")
-
-    # Tạo hash để lưu ảnh duy nhất
-    img_hash = hashlib.md5(latex_formula.encode('utf-8')).hexdigest()
-    img_path = os.path.join("latex_images", f"{img_hash}.png")
-
-    if not os.path.exists(img_path):
-        fig, ax = plt.subplots(figsize=(6, 1.5)) # Điều chỉnh kích thước hình ảnh để phù hợp với công thức
-        ax.axis("off")
-        ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
-        plt.savefig(img_path, dpi=dpi, bbox_inches="tight", pad_inches=0.3)
-        plt.close(fig)
-
-    return img_path
+    """Render công thức LaTeX thành ảnh PNG và trả về một đối tượng BytesIO."""
+    fig, ax = plt.subplots(figsize=(6, 1.5)) # Điều chỉnh kích thước hình ảnh để phù hợp với công thức
+    ax.axis("off")
+    ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches="tight", pad_inches=0.3)
+    plt.close(fig)
+    buf.seek(0) # Đặt con trỏ về đầu buffer
+    return buf
 
 # Try to import MathText for LaTeX rendering in PDF (kept for warning, but not used for rendering)
 try:
@@ -179,12 +172,12 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc" in image
 
-    # Render LaTeX formula to an image file and get its path
-    img_path = render_latex_formula_to_image(cleaned_formula_latex)
+    # Render LaTeX formula to an image BytesIO object
+    img_buffer = render_latex_formula_to_image(cleaned_formula_latex)
     
-    # Create a ReportLab Image object from the image file path
+    # Create a ReportLab Image object from the BytesIO buffer
     # Adjust width and height for optimal display.
-    rl_image = RLImage(img_path, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
+    rl_image = RLImage(img_buffer, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
     
     story.append(rl_image)
     story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
@@ -250,11 +243,11 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     pdf_bytes = buffer.getvalue()
     buffer.close()
     
-    # Xóa file ảnh tạm sau khi đã tạo PDF
-    try:
-        os.remove(img_path)
-    except OSError as e:
-        st.warning(f"Không thể xóa file ảnh tạm {img_path}: {e}")
+    # Không cần xóa file tạm nữa vì không lưu ra file
+    # try:
+    #     os.remove(img_path)
+    # except OSError as e:
+    #     st.warning(f"Không thể xóa file ảnh tạm {img_path}: {e}")
         
     return pdf_bytes
 
@@ -1087,11 +1080,11 @@ elif main_menu == "Tính toán điện":
                 "Điện trở R": f"{R_z} Ω",
                 "Điện kháng X": f"{X_z} Ω"
             }
+            formula_latex = r"Z = \sqrt{R^2 + X^2}"
+            formula_explanation = "Công thức tính tổng trở của mạch điện xoay chiều từ điện trở và điện kháng."
             output_results = {
                 "Tổng trở Z": f"{Z_result:.2f} Ω"
             }
-            formula_latex = r"Z = \sqrt{R^2 + X^2}"
-            formula_explanation = "Công thức tính tổng trở của mạch điện xoay chiều từ điện trở và điện kháng."
 
             pdf_bytes = create_pdf("ĐIỆN TRỞ – KHÁNG – TRỞ KHÁNG", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
             st.session_state['pdf_bytes_z'] = pdf_bytes
