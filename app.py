@@ -1226,17 +1226,12 @@ elif main_menu == "Tính toán điện":
 
     elif sub_menu_tinh_toan == "Tính công suất cosφ": # New section for cosφ calculation
         st.header("⚡ Tính công suất cosφ")
-        st.latex(r"\cos\varphi = \frac{P \cdot 1000}{U \cdot I} \quad \text{(1 pha)}")
-        st.latex(r"\cos\varphi = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot I} \quad \text{(3 pha)}")
-        st.markdown("""
-        **Giải thích các thành phần:**
-        - \( \cos\varphi \): Hệ số công suất
-        - \( P \): Công suất tác dụng (kW)
-        - \( U \): Điện áp (V)
-        - \( I \): Dòng điện (A)
         
-        **Mục đích:** Tính toán hệ số công suất của hệ thống điện, giúp đánh giá hiệu quả sử dụng điện và tối ưu hóa hệ thống.
-        """, unsafe_allow_html=True)
+        cosphi_calc_method = st.radio(
+            "Chọn phương pháp tính cosφ:",
+            ["Từ P, U, I", "Từ P, Q"],
+            key="cosphi_calc_method"
+        )
 
         st.subheader("Thông tin Người tính toán")
         calculator_name_cosphi = st.text_input("Họ và tên:", value="Hà Thị Lê", key="calc_name_cosphi")
@@ -1251,88 +1246,190 @@ elif main_menu == "Tính toán điện":
         current_date_cosphi = datetime.now().strftime("Ngày %d tháng %m năm %Y")
         st.markdown(f"**Thời gian lập phiếu:** {current_date_cosphi}")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            pha_cosphi = st.radio("Loại điện:", ["1 pha", "3 pha"], key="pha_cosphi")
-            P_cosphi = st.number_input("Công suất tác dụng P (kW):", min_value=0.0, key="P_cosphi")
-        with col2:
-            U_cosphi = st.number_input("Điện áp U (V):", min_value=0.0, key="U_cosphi")
-            I_cosphi = st.number_input("Dòng điện I (A):", min_value=0.0, key="I_cosphi")
-        
-        if st.button("Tính cosφ", key="btn_calc_cosphi"):
-            cosphi_result = 0.0
-            if U_cosphi != 0 and I_cosphi != 0:
-                if pha_cosphi == "1 pha":
-                    cosphi_result = (P_cosphi * 1000) / (U_cosphi * I_cosphi)
-                elif pha_cosphi == "3 pha":
-                    cosphi_result = (P_cosphi * 1000) / (math.sqrt(3) * U_cosphi * I_cosphi)
+        if cosphi_calc_method == "Từ P, U, I":
+            st.latex(r"\cos\varphi = \frac{P \cdot 1000}{U \cdot I} \quad \text{(1 pha)}")
+            st.latex(r"\cos\varphi = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot I} \quad \text{(3 pha)}")
+            st.markdown("""
+            **Giải thích các thành phần:**
+            - \( \cos\varphi \): Hệ số công suất
+            - \( P \): Công suất tác dụng (kW)
+            - \( U \): Điện áp (V)
+            - \( I \): Dòng điện (A)
             
-            # Clamp cosphi_result between 0 and 1
-            cosphi_result = max(0.0, min(1.0, cosphi_result))
+            **Mục đích:** Tính toán hệ số công suất của hệ thống điện dựa trên công suất tác dụng, điện áp và dòng điện.
+            """, unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                pha_cosphi = st.radio("Loại điện:", ["1 pha", "3 pha"], key="pha_cosphi")
+                P_cosphi = st.number_input("Công suất tác dụng P (kW):", min_value=0.0, key="P_cosphi")
+            with col2:
+                U_cosphi = st.number_input("Điện áp U (V):", min_value=0.0, key="U_cosphi")
+                I_cosphi = st.number_input("Dòng điện I (A):", min_value=0.0, key="I_cosphi")
             
-            st.success(f"Hệ số công suất cosφ ≈ {cosphi_result:.3f}")
+            if st.button("Tính cosφ (từ P, U, I)", key="btn_calc_cosphi_pui"):
+                cosphi_result = 0.0
+                if U_cosphi != 0 and I_cosphi != 0:
+                    if pha_cosphi == "1 pha":
+                        cosphi_result = (P_cosphi * 1000) / (U_cosphi * I_cosphi)
+                    elif pha_cosphi == "3 pha":
+                        cosphi_result = (P_cosphi * 1000) / (math.sqrt(3) * U_cosphi * I_cosphi)
+                
+                # Clamp cosphi_result between 0 and 1
+                cosphi_result = max(0.0, min(1.0, cosphi_result))
+                
+                st.success(f"Hệ số công suất cosφ ≈ {cosphi_result:.3f}")
 
-            calculator_info = {
-                'name': calculator_name_cosphi,
-                'title': calculator_title_cosphi,
-                'phone': calculator_phone_cosphi
-            }
-            customer_info = {
-                'name': customer_name_cosphi,
-                'address': customer_address_cosphi,
-                'phone': customer_phone_cosphi
-            }
-            input_params = {
-                "Loại điện": pha_cosphi,
-                "Công suất tác dụng P": f"{P_cosphi} kW",
-                "Điện áp U": f"{U_cosphi} V",
-                "Dòng điện I": f"{I_cosphi} A"
-            }
-            output_results = {
-                "Hệ số công suất cosφ": f"{cosphi_result:.3f}"
-            }
-            formula_latex = r"\cos\varphi = \frac{P \cdot 1000}{U \cdot I} \quad \text{(1 pha)} \quad \text{hoặc} \quad \cos\varphi = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot I} \quad \text{(3 pha)}"
-            formula_explanation = "Công thức tính hệ số công suất dựa trên công suất tác dụng, điện áp và dòng điện cho hệ thống 1 pha hoặc 3 pha."
+                calculator_info = {
+                    'name': calculator_name_cosphi,
+                    'title': calculator_title_cosphi,
+                    'phone': calculator_phone_cosphi
+                }
+                customer_info = {
+                    'name': customer_name_cosphi,
+                    'address': customer_address_cosphi,
+                    'phone': customer_phone_cosphi
+                }
+                input_params = {
+                    "Loại điện": pha_cosphi,
+                    "Công suất tác dụng P": f"{P_cosphi} kW",
+                    "Điện áp U": f"{U_cosphi} V",
+                    "Dòng điện I": f"{I_cosphi} A"
+                }
+                output_results = {
+                    "Hệ số công suất cosφ": f"{cosphi_result:.3f}"
+                }
+                formula_latex = r"\cos\varphi = \frac{P \cdot 1000}{U \cdot I} \quad \text{(1 pha)} \quad \text{hoặc} \quad \cos\varphi = \frac{P \cdot 1000}{\sqrt{3} \cdot U \cdot I} \quad \text{(3 pha)}"
+                formula_explanation = "Công thức tính hệ số công suất dựa trên công suất tác dụng, điện áp và dòng điện cho hệ thống 1 pha hoặc 3 pha."
 
-            pdf_bytes = create_pdf("HỆ SỐ CÔNG SUẤT COSFI", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
-            st.session_state['pdf_bytes_cosphi'] = pdf_bytes
-            st.session_state['pdf_filename_cosphi'] = f"Phieu_tinh_cosphi_{datetime.now().strftime('%Y%m%d')}.pdf"
+                pdf_bytes = create_pdf("HỆ SỐ CÔNG SUẤT COSFI (TỪ P, U, I)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
+                st.session_state['pdf_bytes_cosphi_pui'] = pdf_bytes
+                st.session_state['pdf_filename_cosphi_pui'] = f"Phieu_tinh_cosphi_PUI_{datetime.now().strftime('%Y%m%d')}.pdf"
 
-        if 'pdf_bytes_cosphi' in st.session_state and st.session_state['pdf_bytes_cosphi']:
-            st.markdown("---")
-            st.subheader("Tùy chọn xuất phiếu hệ số công suất")
-            col_pdf1_cosphi, col_pdf2_cosphi = st.columns(2)
-            with col_pdf1_cosphi:
-                st.download_button(
-                    label="Xuất PDF",
-                    data=st.session_state['pdf_bytes_cosphi'],
-                    file_name=st.session_state['pdf_filename_cosphi'],
-                    mime="application/pdf",
-                    key="download_cosphi_pdf"
-                )
-            with col_pdf2_cosphi:
-                pdf_base64_cosphi = base64.b64encode(st.session_state['pdf_bytes_cosphi']).decode('utf-8')
-                st.markdown(
-                    f"""
-                    <a href="data:application/pdf;base64,{pdf_base64_cosphi}" target="_blank" style="text-decoration: none;">
-                        <button style="
-                            background-color: #007bff;
-                            border: none;
-                            color: white;
-                            padding: 10px 24px;
-                            text-align: center;
-                            text-decoration: none;
-                            display: inline-block;
-                            font-size: 16px;
-                            margin: 4px 2px;
-                            cursor: pointer;
-                            border-radius: 8px;
-                        ">Xem phiếu</button>
-                    </a>
-                    """,
-                    unsafe_allow_html=True
-                )
-                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+            if 'pdf_bytes_cosphi_pui' in st.session_state and st.session_state['pdf_bytes_cosphi_pui']:
+                st.markdown("---")
+                st.subheader("Tùy chọn xuất phiếu hệ số công suất (từ P, U, I)")
+                col_pdf1_cosphi_pui, col_pdf2_cosphi_pui = st.columns(2)
+                with col_pdf1_cosphi_pui:
+                    st.download_button(
+                        label="Xuất PDF",
+                        data=st.session_state['pdf_bytes_cosphi_pui'],
+                        file_name=st.session_state['pdf_filename_cosphi_pui'],
+                        mime="application/pdf",
+                        key="download_cosphi_pui_pdf"
+                    )
+                with col_pdf2_cosphi_pui:
+                    pdf_base64_cosphi_pui = base64.b64encode(st.session_state['pdf_bytes_cosphi_pui']).decode('utf-8')
+                    st.markdown(
+                        f"""
+                        <a href="data:application/pdf;base64,{pdf_base64_cosphi_pui}" target="_blank" style="text-decoration: none;">
+                            <button style="
+                                background-color: #007bff;
+                                border: none;
+                                color: white;
+                                padding: 10px 24px;
+                                text-align: center;
+                                text-decoration: none;
+                                display: inline-block;
+                                font-size: 16px;
+                                margin: 4px 2px;
+                                cursor: pointer;
+                                border-radius: 8px;
+                            ">Xem phiếu</button>
+                        </a>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
+        elif cosphi_calc_method == "Từ P, Q":
+            st.latex(r"\cos\varphi = \frac{P}{\sqrt{P^2 + Q^2}}")
+            st.markdown("""
+            **Giải thích các thành phần:**
+            - \( \cos\varphi \): Hệ số công suất
+            - \( P \): Công suất tác dụng (kW)
+            - \( Q \): Công suất phản kháng (kVAR)
+            
+            **Mục đích:** Tính toán hệ số công suất của hệ thống điện dựa trên công suất tác dụng và công suất phản kháng.
+            """, unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                P_pq = st.number_input("Công suất tác dụng P (kW):", min_value=0.0, key="P_pq")
+            with col2:
+                Q_pq = st.number_input("Công suất phản kháng Q (kVAR):", min_value=0.0, key="Q_pq")
+            
+            if st.button("Tính cosφ (từ P, Q)", key="btn_calc_cosphi_pq"):
+                cosphi_result_pq = 0.0
+                S_pq = math.sqrt(P_pq**2 + Q_pq**2)
+                if S_pq != 0:
+                    cosphi_result_pq = P_pq / S_pq
+                
+                # Clamp cosphi_result_pq between 0 and 1
+                cosphi_result_pq = max(0.0, min(1.0, cosphi_result_pq))
+                
+                st.success(f"Hệ số công suất cosφ ≈ {cosphi_result_pq:.3f}")
+
+                calculator_info = {
+                    'name': calculator_name_cosphi,
+                    'title': calculator_title_cosphi,
+                    'phone': calculator_phone_cosphi
+                }
+                customer_info = {
+                    'name': customer_name_cosphi,
+                    'address': customer_address_cosphi,
+                    'phone': customer_phone_cosphi
+                }
+                input_params = {
+                    "Công suất tác dụng P": f"{P_pq} kW",
+                    "Công suất phản kháng Q": f"{Q_pq} kVAR"
+                }
+                output_results = {
+                    "Hệ số công suất cosφ": f"{cosphi_result_pq:.3f}"
+                }
+                formula_latex = r"\cos\varphi = \frac{P}{\sqrt{P^2 + Q^2}}"
+                formula_explanation = "Công thức tính hệ số công suất dựa trên công suất tác dụng và công suất phản kháng."
+
+                pdf_bytes = create_pdf("HỆ SỐ CÔNG SUẤT COSFI (TỪ P, Q)", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
+                st.session_state['pdf_bytes_cosphi_pq'] = pdf_bytes
+                st.session_state['pdf_filename_cosphi_pq'] = f"Phieu_tinh_cosphi_PQ_{datetime.now().strftime('%Y%m%d')}.pdf"
+
+            if 'pdf_bytes_cosphi_pq' in st.session_state and st.session_state['pdf_bytes_cosphi_pq']:
+                st.markdown("---")
+                st.subheader("Tùy chọn xuất phiếu hệ số công suất (từ P, Q)")
+                col_pdf1_cosphi_pq, col_pdf2_cosphi_pq = st.columns(2)
+                with col_pdf1_cosphi_pq:
+                    st.download_button(
+                        label="Xuất PDF",
+                        data=st.session_state['pdf_bytes_cosphi_pq'],
+                        file_name=st.session_state['pdf_filename_cosphi_pq'],
+                        mime="application/pdf",
+                        key="download_cosphi_pq_pdf"
+                    )
+                with col_pdf2_cosphi_pq:
+                    pdf_base64_cosphi_pq = base64.b64encode(st.session_state['pdf_bytes_cosphi_pq']).decode('utf-8')
+                    st.markdown(
+                        f"""
+                        <a href="data:application/pdf;base64,{pdf_base64_cosphi_pq}" target="_blank" style="text-decoration: none;">
+                            <button style="
+                                background-color: #007bff;
+                                border: none;
+                                color: white;
+                                padding: 10px 24px;
+                                text-align: center;
+                                text-decoration: none;
+                                display: inline-block;
+                                font-size: 16px;
+                                margin: 4px 2px;
+                                cursor: pointer;
+                                border-radius: 8px;
+                            ">Xem phiếu</button>
+                        </a>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
 
     elif sub_menu_tinh_toan == "Chọn thiết bị bảo vệ":
         st.header("🔌 Tính thiết bị bảo vệ (CB/MCCB)")
