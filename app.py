@@ -911,11 +911,10 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
-                # Lưu ý: File .rb không phải định dạng ảnh thông thường, hãy đảm bảo bạn có file ảnh đúng định dạng (ví dụ: .jpg, .png)
-                with open("cadivi_cho bảng tra dây đồng.rb", "rb") as f: # Consider changing .rb to .jpg or .png if it's an image
+                with open("cadivi_cho bảng tra dây đồng.jpg", "rb") as f: # Changed .rb to .jpg
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Đồng)", use_container_width=True)
             except FileNotFoundError:
-                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây đồng: {e}")
 
@@ -923,11 +922,10 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
-                # Lưu ý: File .rb không phải định dạng ảnh thông thường, hãy đảm bảo bạn có file ảnh đúng định dạng (ví dụ: .jpg, .png)
-                with open("cadivi_cho bảng tra dây nhôm.rb", "rb") as f: # Consider changing .rb to .jpg or .png if it's an image
+                with open("cadivi_cho bảng tra dây nhôm.jpg", "rb") as f: # Changed .rb to .jpg
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Nhôm)", use_container_width=True)
             except FileNotFoundError:
-                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây nhôm: {e}")
         
