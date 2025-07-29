@@ -40,17 +40,8 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# Try to import MathText for LaTeX rendering in PDF
-try:
-    from reportlab.platypus.mathtext import MathText
-    MATH_TEXT_AVAILABLE = True
-except ImportError:
-    # Removed the st.warning message as requested by the user.
-    MATH_TEXT_AVAILABLE = False
-except Exception as e:
-    # Removed the st.warning message as requested by the user.
-    MATH_TEXT_AVAILABLE = False
-
+# Removed the MathText import block entirely as it was not being used and caused issues.
+# The LaTeX rendering for PDF is handled by Matplotlib.
 
 # Đăng ký font hỗ trợ tiếng Việt (ví dụ: DejaVuSans, cần có sẵn trong môi trường)
 # Hoặc bạn có thể sử dụng một font khác có sẵn trên hệ thống hoặc cung cấp file .ttf
@@ -148,17 +139,17 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
 
     try:
         # Increased font sizes for better readability
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=15, alignment=1, spaceAfter=10)) 
-        styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=12, spaceAfter=5)) 
-        styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=10, spaceAfter=4)) 
-        styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=9, alignment=0, leading=11)) # Increased font size and leading
-        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=9, alignment=0, leading=11)) # Increased font size and leading
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=16, alignment=1, spaceAfter=10)) 
+        styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=13, spaceAfter=5)) 
+        styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=11, spaceAfter=4)) 
+        styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=10, alignment=0, leading=12)) # Increased font size and leading
+        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=10, alignment=0, leading=12)) # Increased font size and leading
     except KeyError:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=10))
-        styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=12, spaceAfter=5))
-        styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=10, spaceAfter=4))
-        styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=9, alignment=0, leading=11))
-        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=9, alignment=0, leading=11))
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=16, alignment=1, spaceAfter=10))
+        styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=13, spaceAfter=5))
+        styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=11, spaceAfter=4))
+        styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=10, alignment=0, leading=12))
+        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=10, alignment=0, leading=12))
 
     story = []
 
@@ -192,21 +183,6 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
     story.append(Spacer(1, 0.15 * inch)) # Reduced spacer
     
-    # Use MathText if available, otherwise fallback to Paragraph
-    # This block is commented out because Matplotlib rendering is more reliable
-    # if MATH_TEXT_AVAILABLE:
-    #     cleaned_formula_latex = formula_latex.replace(r"\(", "$$").replace(r"\)", "$$")
-    #     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(1 pha)}", "")
-    #     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
-    #     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n")
-    #     story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
-    #     story.append(MathText(cleaned_formula_latex, styles['NormalStyle']))
-    # else:
-    #     story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
-    
-    # story.append(Paragraph(formula_explanation, styles['NormalStyle']))
-    # story.append(Spacer(1, 0.15 * inch))
-
     # Thông số đầu vào
     story.append(Paragraph("<b>3. THÔNG SỐ ĐẦU VÀO</b>", styles['Heading2Style']))
     input_table_data = []
@@ -217,7 +193,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
         ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 9), # Reduced font size
+        ('FONTSIZE', (0,0), (-1,-1), 10), # Adjusted font size
         ('BOTTOMPADDING', (0,0), (-1,-1), 4), # Reduced padding
         ('TOPPADDING', (0,0), (-1,-1), 4), # Reduced padding
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
@@ -235,7 +211,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
         ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 9), # Reduced font size
+        ('FONTSIZE', (0,0), (-1,-1), 10), # Adjusted font size
         ('BOTTOMPADDING', (0,0), (-1,-1), 4), # Reduced padding
         ('TOPPADDING', (0,0), (-1,-1), 4), # Reduced padding
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
@@ -254,7 +230,7 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     signature_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('FONTNAME', (0,0), (-1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 9), # Reduced font size
+        ('FONTSIZE', (0,0), (-1,-1), 10), # Adjusted font size
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
         ('TOPPADDING', (0,0), (-1,-1), 2),
     ]))
@@ -778,18 +754,18 @@ elif main_menu == "Tính toán điện":
                 # Nếu không có font tiếng Việt, ReportLab sẽ dùng font mặc định và có thể bị lỗi hiển thị
                 try:
                     # Increased font sizes for better readability
-                    styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=15, alignment=1, spaceAfter=10))
-                    styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=12, spaceAfter=5))
-                    styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=10, spaceAfter=4))
-                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=9, alignment=0, leading=11))
-                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=9, alignment=0, leading=11))
+                    styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=16, alignment=1, spaceAfter=10))
+                    styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=13, spaceAfter=5))
+                    styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=11, spaceAfter=4))
+                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=10, alignment=0, leading=12))
+                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=10, alignment=0, leading=12))
                 except KeyError:
                     st.warning("⚠️ Không tìm thấy font tiếng Việt đã đăng ký. PDF sẽ sử dụng font mặc định của ReportLab, có thể không hiển thị tiếng Việt đúng cách.")
-                    styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=10))
-                    styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=12, spaceAfter=5))
-                    styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=10, spaceAfter=4))
-                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=9, alignment=0, leading=11))
-                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=9, alignment=0, leading=11))
+                    styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=16, alignment=1, spaceAfter=10))
+                    styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=13, spaceAfter=5))
+                    styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=11, spaceAfter=4))
+                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=10, alignment=0, leading=12))
+                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=10, alignment=0, leading=12))
 
 
                 story = []
@@ -827,7 +803,7 @@ elif main_menu == "Tính toán điện":
                     ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                     ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
                     ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('FONTSIZE', (0,0), (-1,-1), 10),
                     ('BOTTOMPADDING', (0,0), (-1,-1), 4),
                     ('TOPPADDING', (0,0), (-1,-1), 4),
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
@@ -847,7 +823,7 @@ elif main_menu == "Tính toán điện":
                     ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                     ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
                     ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('FONTSIZE', (0,0), (-1,-1), 10),
                     ('BOTTOMPADDING', (0,0), (-1,-1), 4),
                     ('TOPPADDING', (0,0), (-1,-1), 4),
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
@@ -866,7 +842,7 @@ elif main_menu == "Tính toán điện":
                 signature_table.setStyle(TableStyle([
                     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                     ('FONTNAME', (0,0), (-1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('FONTSIZE', (0,0), (-1,-1), 10),
                     ('BOTTOMPADDING', (0,0), (-1,-1), 2),
                     ('TOPPADDING', (0,0), (-1,-1), 2),
                 ]))
