@@ -941,7 +941,7 @@ elif main_menu == "Tính toán điện":
         st.header("⚡ Chọn tiết diện dây dẫn")
 
         # Store the LaTeX string in a variable
-        formula_latex_tietdien = r"S = \frac{2 \cdot \rho \cdot L \cdot I}{U \cdot (\Delta U\% / 100)}"
+        formula_latex_tietdien = r"S = \frac{2 \cdot \rho \cdot L \cdot I}{U \cdot (\Delta U / 100)}"
         st.latex(formula_latex_tietdien) # Display on Streamlit app
 
         st.markdown("""
@@ -951,7 +951,7 @@ elif main_menu == "Tính toán điện":
         - \( L \): Chiều dài dây dẫn 1 chiều (m)  
         - \( I \): Dòng điện tải (A)  
         - \( U \): Điện áp danh định (V)  
-        - \( \Delta U\% \): Sụt áp cho phép (%)  
+        - \( \Delta U \): Sụt áp cho phép (%)  
 
         **Mục đích:** Tính tiết diện dây dẫn phù hợp với công suất tải, chiều dài và điều kiện sụt áp cho phép.  
         Giúp chọn dây dẫn đúng kỹ thuật và đảm bảo an toàn vận hành.
@@ -1589,7 +1589,7 @@ elif main_menu == "Tính toán điện":
 
                 # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
                 st.markdown("---")
-                st.markdown("📘 **Tham khảo hệ số công suất phản kháng theo Thông tư 15/2014/TT-BCT:**")
+                st.markdown("📘 **Tham khảo biểu đồ công suất phản kháng:**")
                 try:
                     with open("Muabancongsuatphankhang.jpg", "rb") as f:
                         st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
@@ -1690,7 +1690,7 @@ elif main_menu == "Tính toán điện":
 
                 # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
                 st.markdown("---")
-                st.markdown("📘 **Tham khảo hệ số công suất phản kháng theo Thông tư 15/2014/TT-BCT:**")
+                st.markdown("📘 **Tham khảo biểu đồ công suất phản kháng:**")
                 try:
                     with open("Muabancongsuatphankhang.jpg", "rb") as f:
                         st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
