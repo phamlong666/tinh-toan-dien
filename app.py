@@ -34,6 +34,37 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
+
+from reportlab.platypus import Image as RLImage
+import matplotlib.pyplot as plt
+import os
+import hashlib
+
+def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
+    """Render công thức LaTeX thành ảnh PNG và trả về đường dẫn."""
+    if not os.path.exists("latex_images"):
+        os.makedirs("latex_images")
+
+    # Tạo hash để lưu ảnh duy nhất
+    img_hash = hashlib.md5(latex_formula.encode('utf-8')).hexdigest()
+    img_path = os.path.join("latex_images", f"{img_hash}.png")
+
+    if not os.path.exists(img_path):
+        fig, ax = plt.subplots(figsize=(6, 1.5))
+        ax.axis("off")
+        ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
+        plt.savefig(img_path, dpi=dpi, bbox_inches="tight", pad_inches=0.3)
+        plt.close(fig)
+
+    return img_path
+
+def latex_image_paragraph(formula):
+    """Tạo đoạn ảnh công thức từ LaTeX để chèn vào PDF."""
+    img_path = render_latex_formula_to_image(formula)
+    return RLImage(img_path, width=400, height=80)
+
+
+
 # Try to import MathText for LaTeX rendering in PDF
 try:
     from reportlab.platypus.mathtext import MathText # Explicitly import MathText
