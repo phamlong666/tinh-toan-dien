@@ -1,66 +1,66 @@
+import matplotlib.pyplot as plt
 
-def render_latex_to_image(formula: str, output_path: str):
-    import matplotlib.pyplot as plt
-    from matplotlib import rc
-    rc('mathtext', fontset='cm')
-    fig = plt.figure(figsize=(4, 0.5), dpi=200)
-    fig.text(0.5, 0.5, f"${formula}$", horizontalalignment='center', verticalalignment='center', fontsize=16)
-    plt.axis('off')
-    plt.savefig(output_path, bbox_inches='tight', pad_inches=0.1, transparent=True)
-    plt.close()
-
-import matplotlib
-matplotlib.use('Agg') # Thiết lập backend không tương tác cho Matplotlib
+from reportlab.platypus import Image as RLImage
 import matplotlib.pyplot as plt
 import io
-from reportlab.platypus import Image as RLImage
-from reportlab.lib.units import inch
-import os
-import hashlib # Thư viện này không còn cần thiết cho việc tạo hash file tạm
+
+def render_latex_formula_to_image(latex_str):
+    """
+    Renders a LaTeX formula to a PNG image using Matplotlib.
+    This image can then be embedded into the PDF.
+    """
+    fig, ax = plt.subplots(figsize=(5.5, 0.8)) # Adjusted figsize for better PDF fit
+    ax.axis("off")
+    # Use a larger fontsize for better readability in the PDF
+    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=16, ha='center', va='center')
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.1, dpi=300) # Increased DPI for better quality
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức điện
+
+# Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
+
 import streamlit as st
 import math
 from PIL import Image
 import pandas as pd
+import io
 from datetime import datetime
-import base64
+import base64 # Import thư viện base64 để mã hóa PDF cho nút xem phiếu
 
 # Import các thành phần từ ReportLab để tạo PDF
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# Hàm render công thức LaTeX thành ảnh PNG và trả về một đối tượng BytesIO
-def render_latex_formula_to_image(latex_formula, dpi=400, fontsize=20): # Tăng DPI và fontsize
-    """Render công thức LaTeX thành ảnh PNG và trả về một đối tượng BytesIO."""
-    fig, ax = plt.subplots(figsize=(6, 1.5)) # Điều chỉnh kích thước hình ảnh để phù hợp với công thức
-    ax.axis("off")
-    ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
-    buf = io.BytesIO()
-    try:
-        plt.savefig(buf, format='png', dpi=dpi, bbox_inches="tight", pad_inches=0.3)
-    except Exception as e:
-        st.error(f"❌ Lỗi khi lưu ảnh công thức LaTeX: {e}. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.")
-        return io.BytesIO() # Trả về buffer rỗng nếu có lỗi
-    finally:
-        plt.close(fig)
-    buf.seek(0) # Đặt con trỏ về đầu buffer
-    return buf
-
-# Try to import MathText for LaTeX rendering in PDF (kept for warning, but not used for rendering)
+# Try to import MathText for LaTeX rendering in PDF
 try:
-    from reportlab.platypus.mathtext import MathText # Explicitly import MathText
+    # MathText is part of reportlab.platypus. It's not a separate library.
+    # The import statement for MathText is usually from reportlab.platypus.mathtext
+    # However, it's not always straightforward to use and might require specific LaTeX distributions.
+    # Given the user's previous error, it's safer to rely on Matplotlib for LaTeX rendering.
+    # Keeping this block for completeness but ensuring it doesn't break if MathText isn't fully configured.
+    from reportlab.platypus.mathtext import MathText
     MATH_TEXT_AVAILABLE = True
 except ImportError:
     st.warning("⚠️ Thư viện 'reportlab.platypus.mathtext' không tìm thấy. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng. Vui lòng đảm bảo ReportLab được cài đặt đầy đủ.")
+    MATH_TEXT_AVAILABLE = False
+except Exception as e:
+    st.warning(f"⚠️ Lỗi khi tải MathText: {e}. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng.")
     MATH_TEXT_AVAILABLE = False
 
 
 # Đăng ký font hỗ trợ tiếng Việt (ví dụ: DejaVuSans, cần có sẵn trong môi trường)
 # Hoặc bạn có thể sử dụng một font khác có sẵn trên hệ thống hoặc cung cấp file .ttf
 try:
+    # Assuming DejaVuSans.ttf and DejaVuSans-Bold.ttf are in the same directory as app.py
     pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
     pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
 except Exception:
@@ -145,127 +145,129 @@ copper_cable_data, aluminum_cable_data = load_cable_data(
 def create_pdf(title, formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            topMargin=0.75 * inch,
-                            bottomMargin=0.75 * inch)
+                            topMargin=0.5 * inch, # Reduced top margin
+                            bottomMargin=0.5 * inch, # Reduced bottom margin
+                            leftMargin=0.75 * inch, # Standard left margin
+                            rightMargin=0.75 * inch) # Standard right margin
     styles = getSampleStyleSheet()
 
     try:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=16, alignment=1, spaceAfter=14))
-        styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=12, spaceAfter=6))
-        styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=10, spaceAfter=6))
-        styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=9, alignment=1))
-        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=9, alignment=1))
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=14, alignment=1, spaceAfter=10)) # Reduced font size and spacing
+        styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=11, spaceAfter=5)) # Reduced font size and spacing
+        styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=9, spaceAfter=4)) # Reduced font size and spacing
+        styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=8, alignment=0, leading=10)) # Reduced font size, added leading for line spacing
+        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=8, alignment=0, leading=10)) # Reduced font size, added leading for line spacing
     except KeyError:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=16, alignment=1, spaceAfter=14))
-        styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=12, spaceAfter=6))
-        styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=10, spaceAfter=6))
-        styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=9, alignment=1))
-        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=9, alignment=1))
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=14, alignment=1, spaceAfter=10))
+        styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=11, spaceAfter=5))
+        styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=9, spaceAfter=4))
+        styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=8, alignment=0, leading=10))
+        styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=8, alignment=0, leading=10))
 
     story = []
 
     story.append(Paragraph(f"<b>PHIẾU TÍNH TOÁN {title.upper()}</b>", styles['TitleStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.15 * inch)) # Reduced spacer
 
     # Thông tin chung
     story.append(Paragraph("<b>1. THÔNG TIN CHUNG</b>", styles['Heading2Style']))
     story.append(Paragraph(f"<b>Người tính toán:</b> {calculator_info['name']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Chức danh:</b> {calculator_info['title']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Điện thoại:</b> {calculator_info['phone']}", styles['NormalStyle']))
-    story.append(Spacer(1, 0.1 * inch))
+    story.append(Spacer(1, 0.05 * inch)) # Reduced spacer
     story.append(Paragraph(f"<b>Khách hàng:</b> {customer_info['name']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Địa chỉ:</b> {customer_info['address']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Điện thoại khách hàng:</b> {customer_info['phone']}", styles['NormalStyle']))
     story.append(Paragraph(f"<b>Thời gian lập phiếu:</b> {datetime.now().strftime('Ngày %d tháng %m năm %Y')}", styles['NormalStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.15 * inch)) # Reduced spacer
 
     # Công thức và giải thích
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
-    
-    # Render LaTeX formula to an image and embed it
     story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
-    
-    # Clean the formula for better image rendering if it contains specific text commands
-    cleaned_formula_latex = formula_latex.replace(r"\quad \text{(1 pha)}", "")
-    cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
-    cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc" in image
-
-    # Render LaTeX formula to an image BytesIO object
-    img_buffer = render_latex_formula_to_image(cleaned_formula_latex)
-    
-    # Kiểm tra xem buffer có dữ liệu không
-    if img_buffer.getbuffer().nbytes == 0:
-        # st.error("❌ Lỗi: Không thể tạo ảnh từ công thức LaTeX. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.")
-        story.append(Paragraph("<i>[Không thể hiển thị công thức LaTeX. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.]</i>", styles['NormalStyle']))
-    else:
-        # Create a ReportLab Image object from the BytesIO buffer
-        # Adjust width and height for optimal display.
-        rl_image = RLImage(img_buffer, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
-        story.append(rl_image)
-    
-    story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
-    
+    try:
+        # Tạo ảnh công thức từ matplotlib
+        formula_img_buf = render_latex_formula_to_image(formula_latex)
+        # Adjust image width/height to fit on A4
+        formula_img = Image(formula_img_buf, width=5.0*inch, height=0.7*inch) # Adjusted image size
+        story.append(formula_img)
+    except Exception as e:
+        story.append(Paragraph(f"(Không hiển thị được công thức LaTeX: {e})", styles['NormalStyle']))
+        story.append(Paragraph(formula_latex, styles['NormalStyle']))
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.15 * inch)) # Reduced spacer
+    
+    # Use MathText if available, otherwise fallback to Paragraph
+    # This block is commented out because Matplotlib rendering is more reliable
+    # if MATH_TEXT_AVAILABLE:
+    #     cleaned_formula_latex = formula_latex.replace(r"\(", "$$").replace(r"\)", "$$")
+    #     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(1 pha)}", "")
+    #     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
+    #     cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n")
+    #     story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
+    #     story.append(MathText(cleaned_formula_latex, styles['NormalStyle']))
+    # else:
+    #     story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
+    
+    # story.append(Paragraph(formula_explanation, styles['NormalStyle']))
+    # story.append(Spacer(1, 0.15 * inch))
 
     # Thông số đầu vào
     story.append(Paragraph("<b>3. THÔNG SỐ ĐẦU VÀO</b>", styles['Heading2Style']))
     input_table_data = []
     for label, value in input_params.items():
-        input_table_data.append([f"<b>{label}:</b>", str(value)])
-    input_table = Table(input_table_data, colWidths=[2.5*inch, 3*inch])
+        input_table_data.append([Paragraph(f"<b>{label}</b>", styles['TableCellBoldStyle']), Paragraph(str(value), styles['TableCellStyle'])])
+    input_table = Table(input_table_data, colWidths=[2.5*inch, 3*inch]) # Adjusted colWidths for better fit
     input_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
         ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('FONTSIZE', (0,0), (-1,-1), 9), # Reduced font size
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4), # Reduced padding
+        ('TOPPADDING', (0,0), (-1,-1), 4), # Reduced padding
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
     ]))
     story.append(input_table)
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.15 * inch)) # Reduced spacer
 
     # Kết quả tính toán
     story.append(Paragraph("<b>4. KẾT QUẢ TÍNH TOÁN</b>", styles['Heading2Style']))
     output_table_data = []
     for label, value in output_results.items():
-        output_table_data.append([f"<b>{label}:</b>", str(value)])
-    output_table = Table(output_table_data, colWidths=[3*inch, 2.5*inch])
+        output_table_data.append([Paragraph(f"<b>{label}</b>", styles['TableCellBoldStyle']), Paragraph(str(value), styles['TableCellStyle'])])
+    output_table = Table(output_table_data, colWidths=[3*inch, 2.5*inch]) # Adjusted colWidths for better fit
     output_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'LEFT'),
         ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
         ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('FONTSIZE', (0,0), (-1,-1), 9), # Reduced font size
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4), # Reduced padding
+        ('TOPPADDING', (0,0), (-1,-1), 4), # Reduced padding
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
     ]))
     story.append(output_table)
-    story.append(Spacer(1, 0.5 * inch))
+    story.append(Spacer(1, 0.3 * inch)) # Reduced spacer
     
     # Chữ ký
     signature_data = [
         [Paragraph("<b>NGƯỜI TÍNH TOÁN</b>", styles['TableCellBoldStyle']), Paragraph("<b>KHÁCH HÀNG</b>", styles['TableCellBoldStyle'])],
         [Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle']), Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle'])],
-        [Spacer(1, 0.8 * inch), Spacer(1, 0.8 * inch)],
+        [Spacer(1, 0.6 * inch), Spacer(1, 0.6 * inch)], # Reduced space for signature
         [Paragraph(f"<b>{calculator_info['name']}</b>", styles['TableCellBoldStyle']), Paragraph(f"<b>{customer_info['name']}</b>", styles['TableCellBoldStyle'])]
     ]
     signature_table = Table(signature_data, colWidths=[2.75*inch, 2.75*inch])
     signature_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('FONTNAME', (0,0), (-1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('FONTSIZE', (0,0), (-1,-1), 9), # Reduced font size
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
         ('TOPPADDING', (0,0), (-1,-1), 2),
     ]))
     story.append(signature_table)
-    story.append(Spacer(1, 0.2 * inch))
+    story.append(Spacer(1, 0.1 * inch)) # Reduced spacer
 
     doc.build(story)
     pdf_bytes = buffer.getvalue()
     buffer.close()
-        
     return pdf_bytes
 
 # Xử lý các lựa chọn từ menu chính
@@ -768,109 +770,111 @@ elif main_menu == "Tính toán điện":
             if suggested_size is not None: # Chỉ tạo PDF nếu có gợi ý tiết diện hợp lệ
                 # Tạo một đối tượng BytesIO để lưu PDF vào bộ nhớ
                 buffer = io.BytesIO()
-                doc = SimpleDocTemplate(buffer, pagesize=A4)
+                doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                        topMargin=0.5 * inch, # Reduced top margin
+                                        bottomMargin=0.5 * inch, # Reduced bottom margin
+                                        leftMargin=0.75 * inch, # Standard left margin
+                                        rightMargin=0.75 * inch) # Standard right margin
                 styles = getSampleStyleSheet()
 
                 # Định nghĩa style cho tiếng Việt
                 # Cần đảm bảo font 'DejaVuSans' và 'DejaVuSans-Bold' đã được đăng ký
                 # Nếu không có font tiếng Việt, ReportLab sẽ dùng font mặc định và có thể bị lỗi hiển thị
                 try:
-                    styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=16, alignment=1, spaceAfter=14))
-                    styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=12, spaceAfter=6))
-                    styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=10, spaceAfter=6))
-                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=9, alignment=1))
-                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=9, alignment=1))
+                    styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=14, alignment=1, spaceAfter=10))
+                    styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=11, spaceAfter=5))
+                    styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=9, spaceAfter=4))
+                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=8, alignment=0, leading=10))
+                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=8, alignment=0, leading=10))
                 except KeyError:
                     st.warning("⚠️ Không tìm thấy font tiếng Việt đã đăng ký. PDF sẽ sử dụng font mặc định của ReportLab, có thể không hiển thị tiếng Việt đúng cách.")
-                    styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=16, alignment=1, spaceAfter=14))
-                    styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=12, spaceAfter=6))
-                    styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=10, spaceAfter=6))
-                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=9, alignment=1))
-                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=9, alignment=1))
+                    styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=14, alignment=1, spaceAfter=10))
+                    styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=11, spaceAfter=5))
+                    styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=9, spaceAfter=4))
+                    styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=8, alignment=0, leading=10))
+                    styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='Helvetica-Bold', fontSize=8, alignment=0, leading=10))
 
 
                 story = []
 
                 # Tiêu đề phiếu
                 story.append(Paragraph("<b>PHIẾU TÍNH TOÁN LỰA CHỌN DÂY CÁP ĐIỆN</b>", styles['TitleStyle']))
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.15 * inch))
 
                 # Thông tin chung
                 story.append(Paragraph("<b>1. THÔNG TIN CHUNG</b>", styles['Heading2Style']))
                 story.append(Paragraph(f"<b>Người tính toán:</b> {calculator_name}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Chức danh:</b> {calculator_title}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Điện thoại:</b> {calculator_phone}", styles['NormalStyle']))
-                story.append(Spacer(1, 0.1 * inch))
+                story.append(Spacer(1, 0.05 * inch))
                 story.append(Paragraph(f"<b>Khách hàng:</b> {customer_name}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Địa chỉ:</b> {customer_address}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Điện thoại khách hàng:</b> {customer_phone}", styles['NormalStyle']))
                 story.append(Paragraph(f"<b>Thời gian lập phiếu:</b> {current_date}", styles['NormalStyle']))
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.15 * inch))
 
                 # Thông số đầu vào
                 story.append(Paragraph("<b>2. THÔNG SỐ ĐẦU VÀO</b>", styles['Heading2Style']))
                 input_data = [
-                    ["Loại điện:", pha],
-                    ["Công suất tải (P):", f"{P} kW"],
-                    ["Điện áp danh định (U):", f"{U} V"],
-                    ["Hệ số công suất (cosφ):", cos_phi],
-                    ["Chiều dài dây dẫn (L):", f"{L} m"],
-                    ["Sụt áp cho phép (ΔU%):", f"{deltaU_percent} %"],
-                    ["Chất liệu dây dẫn:", material],
-                    ["Phương pháp lắp đặt:", installation_method]
+                    [Paragraph("<b>Loại điện:</b>", styles['TableCellBoldStyle']), Paragraph(pha, styles['TableCellStyle'])],
+                    [Paragraph("<b>Công suất tải (P):</b>", styles['TableCellBoldStyle']), Paragraph(f"{P} kW", styles['TableCellStyle'])],
+                    [Paragraph("<b>Điện áp danh định (U):</b>", styles['TableCellBoldStyle']), Paragraph(f"{U} V", styles['TableCellStyle'])],
+                    [Paragraph("<b>Hệ số công suất (cosφ):</b>", styles['TableCellBoldStyle']), Paragraph(str(cos_phi), styles['TableCellStyle'])],
+                    [Paragraph("<b>Chiều dài dây dẫn (L):</b>", styles['TableCellBoldStyle']), Paragraph(f"{L} m", styles['TableCellStyle'])],
+                    [Paragraph("<b>Sụt áp cho phép (ΔU%):</b>", styles['TableCellBoldStyle']), Paragraph(f"{deltaU_percent} %", styles['TableCellStyle'])],
+                    [Paragraph("<b>Chất liệu dây dẫn:</b>", styles['TableCellBoldStyle']), Paragraph(material, styles['TableCellStyle'])],
+                    [Paragraph("<b>Phương pháp lắp đặt:</b>", styles['TableCellBoldStyle']), Paragraph(installation_method, styles['TableCellStyle'])]
                 ]
                 input_table = Table(input_data, colWidths=[2.5*inch, 3*inch])
                 input_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
                     ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                     ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
                     ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-                    ('FONTSIZE', (0,0), (-1,-1), 10),
-                    ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-                    ('TOPPADDING', (0,0), (-1,-1), 6),
+                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+                    ('TOPPADDING', (0,0), (-1,-1), 4),
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
                 ]))
                 story.append(input_table)
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.15 * inch))
 
                 # Kết quả tính toán
                 story.append(Paragraph("<b>3. KẾT QUẢ TÍNH TOÁN VÀ GỢI Ý</b>", styles['Heading2Style']))
                 output_data = [
-                    ["Dòng điện tính toán (I):", f"{I:.2f} A"],
-                    ["Tiết diện S tối thiểu theo sụt áp:", f"{S:.2f} mm²"],
-                    ["Gợi ý tiết diện chuẩn CADIVI:", f"{suggested_size} mm²"]
+                    [Paragraph("<b>Dòng điện tính toán (I):</b>", styles['TableCellBoldStyle']), Paragraph(f"{I:.2f} A", styles['TableCellStyle'])],
+                    [Paragraph("<b>Tiết diện S tối thiểu theo sụt áp:</b>", styles['TableCellBoldStyle']), Paragraph(f"{S:.2f} mm²", styles['TableCellStyle'])],
+                    [Paragraph("<b>Gợi ý tiết diện chuẩn CADIVI:</b>", styles['TableCellBoldStyle']), Paragraph(f"{suggested_size} mm²", styles['TableCellStyle'])]
                 ]
                 output_table = Table(output_data, colWidths=[3*inch, 2.5*inch])
                 output_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
                     ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                     ('FONTNAME', (0,0), (0,-1), 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'),
                     ('FONTNAME', (1,0), (1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-                    ('FONTSIZE', (0,0), (-1,-1), 10),
-                    ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-                    ('TOPPADDING', (0,0), (-1,-1), 6),
+                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+                    ('TOPPADDING', (0,0), (-1,-1), 4),
                     ('GRID', (0,0), (-1,-1), 0.5, colors.grey)
                 ]))
                 story.append(output_table)
-                story.append(Spacer(1, 0.5 * inch)) # Thêm khoảng trống trước chữ ký
+                story.append(Spacer(1, 0.3 * inch)) # Thêm khoảng trống trước chữ ký
                 
                 # Chữ ký
                 signature_data = [
                     [Paragraph("<b>NGƯỜI TÍNH TOÁN</b>", styles['TableCellBoldStyle']), Paragraph("<b>KHÁCH HÀNG</b>", styles['TableCellBoldStyle'])],
                     [Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle']), Paragraph("(Ký, ghi rõ họ tên)", styles['TableCellStyle'])],
-                    [Spacer(1, 0.8 * inch), Spacer(1, 0.8 * inch)], # Khoảng trống cho chữ ký
+                    [Spacer(1, 0.6 * inch), Spacer(1, 0.6 * inch)], # Khoảng trống cho chữ ký
                     [Paragraph(f"<b>{calculator_name}</b>", styles['TableCellBoldStyle']), Paragraph(f"<b>{customer_name}</b>", styles['TableCellBoldStyle'])]
                 ]
                 signature_table = Table(signature_data, colWidths=[2.75*inch, 2.75*inch])
                 signature_table.setStyle(TableStyle([
                     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                     ('FONTNAME', (0,0), (-1,-1), 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'),
-                    ('FONTSIZE', (0,0), (-1,-1), 10),
+                    ('FONTSIZE', (0,0), (-1,-1), 9),
                     ('BOTTOMPADDING', (0,0), (-1,-1), 2),
                     ('TOPPADDING', (0,0), (-1,-1), 2),
                 ]))
                 story.append(signature_table)
-                story.append(Spacer(1, 0.2 * inch))
+                story.append(Spacer(1, 0.1 * inch))
 
 
                 doc.build(story)
@@ -927,7 +931,8 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây đồng.jpg", "rb") as f: # Changed .rb to .jpg
+                # ĐÃ SỬA LỖI: Thay đổi .rb thành .jpg
+                with open("cadivi_cho bảng tra dây đồng.jpg", "rb") as f:
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Đồng)", use_container_width=True)
             except FileNotFoundError:
                 st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
@@ -938,7 +943,8 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây nhôm.jpg", "rb") as f: # Changed .rb to .jpg
+                # ĐÃ SỬA LỖI: Thay đổi .rb thành .jpg
+                with open("cadivi_cho bảng tra dây nhôm.jpg", "rb") as f:
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Nhôm)", use_container_width=True)
             except FileNotFoundError:
                 st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
@@ -1097,11 +1103,11 @@ elif main_menu == "Tính toán điện":
                 "Điện trở R": f"{R_z} Ω",
                 "Điện kháng X": f"{X_z} Ω"
             }
-            formula_latex = r"Z = \sqrt{R^2 + X^2}"
-            formula_explanation = "Công thức tính tổng trở của mạch điện xoay chiều từ điện trở và điện kháng."
             output_results = {
                 "Tổng trở Z": f"{Z_result:.2f} Ω"
             }
+            formula_latex = r"Z = \sqrt{R^2 + X^2}"
+            formula_explanation = "Công thức tính tổng trở của mạch điện xoay chiều từ điện trở và điện kháng."
 
             pdf_bytes = create_pdf("ĐIỆN TRỞ – KHÁNG – TRỞ KHÁNG", formula_latex, formula_explanation, input_params, output_results, calculator_info, customer_info)
             st.session_state['pdf_bytes_z'] = pdf_bytes
@@ -1329,3 +1335,4 @@ elif main_menu == "Công thức điện":
         i = math.sqrt(ptt / r) if r != 0 else 0
         if st.button("Tính I"):
             st.success(f"I ≈ {i:.3f} A")
+
