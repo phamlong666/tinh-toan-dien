@@ -167,28 +167,26 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     # Công thức và giải thích
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
     
-    # Use MathText if available, otherwise fallback to Paragraph
-    story.append(Paragraph("Công thức tính:", styles['NormalStyle'])) # This line should always be there
-    if MATH_TEXT_AVAILABLE:
-        # MathText expects the formula to be enclosed in $ or $$.
-        # The formula_latex already has \(...\) which is equivalent to $...$.
-        # We need to remove the \text{} and \quad commands for better MathText parsing
-        # and ensure it's treated as a single mathematical expression.
-        # For multi-line formulas, we can use $$...$$ for display mode.
-        # Let's try to simplify the formula for MathText by removing \text and \quad
-        # and put each formula on a new line if needed, or keep it concise.
-        
-        # Remove \( and \) and replace with $$ for display mode in MathText
-        cleaned_formula_latex = formula_latex.replace(r"\(", "$$").replace(r"\)", "$$")
-        # Remove \text{} and \quad for better MathText compatibility
-        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(1 pha)}", "")
-        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
-        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc"
-        
-        story.append(MathText(cleaned_formula_latex, styles['NormalStyle']))
-    else:
-        # Fallback if MathText is not available, render as a regular Paragraph
-        story.append(Paragraph(formula_latex, styles['NormalStyle']))
+    # Render LaTeX formula to an image and embed it
+    story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
+    
+    # Clean the formula for better image rendering if it contains specific text commands
+    # For example, remove \quad \text{...} if it's causing issues with image rendering
+    cleaned_formula_latex = formula_latex.replace(r"\quad \text{(1 pha)}", "")
+    cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
+    cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc" in image
+
+    image_buffer = render_latex_formula_to_image(cleaned_formula_latex)
+    
+    # Create a ReportLab Image object from the buffer
+    # You might need to adjust the width and height for optimal display
+    rl_image = RLImage(image_buffer)
+    # Set a fixed width and let ReportLab calculate height to maintain aspect ratio
+    rl_image.drawWidth = 4 * inch # Adjust this value as needed
+    rl_image.drawHeight = rl_image.drawWidth * (rl_image.height / rl_image.width) # Maintain aspect ratio
+    
+    story.append(rl_image)
+    story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
     
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
