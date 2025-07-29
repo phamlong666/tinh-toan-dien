@@ -189,8 +189,13 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     else:
         # Create a ReportLab Image object from the BytesIO buffer
         # Adjust width and height for optimal display.
-        rl_image = RLImage(img_buffer, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
-        story.append(rl_image)
+        # Ensure the image is added to the story
+        try:
+            rl_image = RLImage(img_buffer, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
+            story.append(rl_image)
+        except Exception as e:
+            st.error(f"❌ Lỗi khi thêm ảnh vào PDF: {e}. Vui lòng kiểm tra lại dữ liệu ảnh hoặc cài đặt ReportLab.")
+            story.append(Paragraph("<i>[Lỗi khi nhúng ảnh công thức LaTeX]</i>", styles['NormalStyle']))
     
     story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
     
@@ -525,7 +530,6 @@ elif main_menu == "Tính toán điện":
         customer_address_sd = st.text_input("Địa chỉ:", value="xã Định Hóa, tỉnh Thái Nguyên", key="cust_address_sd")
         customer_phone_sd = st.text_input("Số điện thoại khách hàng:", value="0968552888", key="cust_phone_sd")
         
-        # Lấy thời gian thực (chỉ ngày, tháng, năm)
         current_date_sd = datetime.now().strftime("Ngày %d tháng %m năm %Y")
         st.markdown(f"**Thời gian lập phiếu:** {current_date_sd}")
 
