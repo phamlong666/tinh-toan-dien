@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg') # Thiết lập backend không tương tác cho Matplotlib
 import matplotlib.pyplot as plt
 import io
 from reportlab.platypus import Image as RLImage
@@ -26,8 +28,13 @@ def render_latex_formula_to_image(latex_formula, dpi=400, fontsize=20): # Tăng 
     ax.axis("off")
     ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches="tight", pad_inches=0.3)
-    plt.close(fig)
+    try:
+        plt.savefig(buf, format='png', dpi=dpi, bbox_inches="tight", pad_inches=0.3)
+    except Exception as e:
+        st.error(f"❌ Lỗi khi lưu ảnh công thức LaTeX: {e}. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.")
+        return io.BytesIO() # Trả về buffer rỗng nếu có lỗi
+    finally:
+        plt.close(fig)
     buf.seek(0) # Đặt con trỏ về đầu buffer
     return buf
 
@@ -177,8 +184,8 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     
     # Kiểm tra xem buffer có dữ liệu không
     if img_buffer.getbuffer().nbytes == 0:
-        st.error("❌ Lỗi: Không thể tạo ảnh từ công thức LaTeX. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.")
-        story.append(Paragraph("<i>[Không thể hiển thị công thức LaTeX]</i>", styles['NormalStyle']))
+        # st.error("❌ Lỗi: Không thể tạo ảnh từ công thức LaTeX. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.")
+        story.append(Paragraph("<i>[Không thể hiển thị công thức LaTeX. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.]</i>", styles['NormalStyle']))
     else:
         # Create a ReportLab Image object from the BytesIO buffer
         # Adjust width and height for optimal display.
