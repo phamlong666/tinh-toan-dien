@@ -20,7 +20,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 # Hàm render công thức LaTeX thành ảnh PNG và trả về một đối tượng BytesIO
-def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
+def render_latex_formula_to_image(latex_formula, dpi=400, fontsize=20): # Tăng DPI và fontsize
     """Render công thức LaTeX thành ảnh PNG và trả về một đối tượng BytesIO."""
     fig, ax = plt.subplots(figsize=(6, 1.5)) # Điều chỉnh kích thước hình ảnh để phù hợp với công thức
     ax.axis("off")
@@ -175,11 +175,16 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     # Render LaTeX formula to an image BytesIO object
     img_buffer = render_latex_formula_to_image(cleaned_formula_latex)
     
-    # Create a ReportLab Image object from the BytesIO buffer
-    # Adjust width and height for optimal display.
-    rl_image = RLImage(img_buffer, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
+    # Kiểm tra xem buffer có dữ liệu không
+    if img_buffer.getbuffer().nbytes == 0:
+        st.error("❌ Lỗi: Không thể tạo ảnh từ công thức LaTeX. Vui lòng kiểm tra lại công thức hoặc cài đặt Matplotlib.")
+        story.append(Paragraph("<i>[Không thể hiển thị công thức LaTeX]</i>", styles['NormalStyle']))
+    else:
+        # Create a ReportLab Image object from the BytesIO buffer
+        # Adjust width and height for optimal display.
+        rl_image = RLImage(img_buffer, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
+        story.append(rl_image)
     
-    story.append(rl_image)
     story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
     
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
@@ -242,12 +247,6 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     doc.build(story)
     pdf_bytes = buffer.getvalue()
     buffer.close()
-    
-    # Không cần xóa file tạm nữa vì không lưu ra file
-    # try:
-    #     os.remove(img_path)
-    # except OSError as e:
-    #     st.warning(f"Không thể xóa file ảnh tạm {img_path}: {e}")
         
     return pdf_bytes
 
