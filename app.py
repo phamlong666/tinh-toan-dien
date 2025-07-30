@@ -136,13 +136,14 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
 
     try:
         # Increased font sizes for better readability
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=17, alignment=1, spaceAfter=10)) 
+        # Changed font size from 17 to 15 to prevent text overflow
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='DejaVuSans-Bold', fontSize=15, alignment=1, spaceAfter=10)) 
         styles.add(ParagraphStyle(name='Heading2Style', fontName='DejaVuSans-Bold', fontSize=14, spaceAfter=5)) 
         styles.add(ParagraphStyle(name='NormalStyle', fontName='DejaVuSans', fontSize=12, spaceAfter=4)) 
         styles.add(ParagraphStyle(name='TableCellStyle', fontName='DejaVuSans', fontSize=11, alignment=0, leading=13)) # Increased font size and leading
         styles.add(ParagraphStyle(name='TableCellBoldStyle', fontName='DejaVuSans-Bold', fontSize=11, alignment=0, leading=13)) # Increased font size and leading
     except KeyError:
-        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=17, alignment=1, spaceAfter=10))
+        styles.add(ParagraphStyle(name='TitleStyle', fontName='Helvetica-Bold', fontSize=15, alignment=1, spaceAfter=10)) # Changed font size here too
         styles.add(ParagraphStyle(name='Heading2Style', fontName='Helvetica-Bold', fontSize=14, spaceAfter=5))
         styles.add(ParagraphStyle(name='NormalStyle', fontName='Helvetica', fontSize=12, spaceAfter=4))
         styles.add(ParagraphStyle(name='TableCellStyle', fontName='Helvetica', fontSize=11, alignment=0, leading=13))
@@ -528,6 +529,10 @@ elif main_menu == "Tính toán điện":
                 Q_s_pq = st.number_input("Công suất phản kháng Q (kVAR):", min_value=0.0, key="Q_s_pq")
             
             if st.button("Tính S (từ P, Q)", key="btn_calc_s_pq"):
+                if S_q_ps >= P_q_ps:
+                    Q_result = math.sqrt(S_q_ps**2 - P_q_ps**2)
+                else:
+                    st.warning("Công suất biểu kiến (S) phải lớn hơn hoặc bằng Công suất tác dụng (P).")
                 S_result = math.sqrt(P_s_pq**2 + Q_s_pq**2)
                 st.success(f"Công suất biểu kiến S ≈ {S_result:.2f} kVA")
                 input_params_s = {
@@ -1524,7 +1529,7 @@ elif main_menu == "Tính toán điện":
                     """,
                     unsafe_allow_html=True
                 )
-                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+                st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
 
     elif sub_menu_tinh_toan == "Tính công suất cosφ": # New section for cosφ calculation
         st.header("⚡ Tính công suất cosφ")
@@ -1582,6 +1587,17 @@ elif main_menu == "Tính toán điện":
                 
                 st.success(f"Hệ số công suất cosφ ≈ {cosphi_result:.3f}")
 
+                # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
+                st.markdown("---")
+                st.markdown("📘 **Tham khảo hệ số công suất phản kháng theo Thông tư 15/2014/TT-BCT:**")
+                try:
+                    with open("Muabancongsuatphankhang.jpg", "rb") as f:
+                        st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
+                except FileNotFoundError:
+                    st.warning("⚠️ Không tìm thấy file ảnh 'Muabancongsuatphankhang.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                except Exception as e:
+                    st.error(f"❌ Có lỗi xảy ra khi tải ảnh công suất phản kháng: {e}")
+
                 calculator_info = {
                     'name': calculator_name_cosphi,
                     'title': calculator_title_cosphi,
@@ -1616,7 +1632,7 @@ elif main_menu == "Tính toán điện":
                     st.download_button(
                         label="Xuất PDF",
                         data=st.session_state['pdf_bytes_cosphi_pui'],
-                        file_name=st.session_state['pdf_filename_pui'],
+                        file_name=st.session_state['pdf_filename_cosphi_pui'], # Corrected filename key
                         mime="application/pdf",
                         key="download_cosphi_pui_pdf"
                     )
@@ -1672,6 +1688,17 @@ elif main_menu == "Tính toán điện":
                 
                 st.success(f"Hệ số công suất cosφ ≈ {cosphi_result_pq:.3f}")
 
+                # Hiển thị ảnh "Muabancongsuatphankhang.jpg"
+                st.markdown("---")
+                st.markdown("📘 **Tham khảo hệ số công suất phản kháng theo Thông tư 15/2014/TT-BCT:**")
+                try:
+                    with open("Muabancongsuatphankhang.jpg", "rb") as f:
+                        st.image(f.read(), caption="Biểu đồ mua bán công suất phản kháng", use_container_width=True)
+                except FileNotFoundError:
+                    st.warning("⚠️ Không tìm thấy file ảnh 'Muabancongsuatphankhang.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                except Exception as e:
+                    st.error(f"❌ Có lỗi xảy ra khi tải ảnh công suất phản kháng: {e}")
+
                 calculator_info = {
                     'name': calculator_name_cosphi,
                     'title': calculator_title_cosphi,
@@ -1696,6 +1723,7 @@ elif main_menu == "Tính toán điện":
                 st.session_state['pdf_bytes_cosphi_pq'] = pdf_bytes
                 st.session_state['pdf_filename_cosphi_pq'] = f"Phieu_tinh_cosphi_PQ_{datetime.now().strftime('%Y%m%d')}.pdf"
 
+            # FIX: Changed 'pdf_bytes_pq' to 'pdf_bytes_cosphi_pq'
             if 'pdf_bytes_cosphi_pq' in st.session_state and st.session_state['pdf_bytes_cosphi_pq']:
                 st.markdown("---")
                 st.subheader("Tùy chọn xuất phiếu hệ số công suất (từ P, Q)")
@@ -1704,7 +1732,7 @@ elif main_menu == "Tính toán điện":
                     st.download_button(
                         label="Xuất PDF",
                         data=st.session_state['pdf_bytes_cosphi_pq'],
-                        file_name=st.session_state['pdf_filename_pq'],
+                        file_name=st.session_state['pdf_filename_cosphi_pq'], # Corrected filename key
                         mime="application/pdf",
                         key="download_cosphi_pq_pdf"
                     )
@@ -2002,3 +2030,4 @@ elif main_menu == "Công thức điện":
                 pdf_base64_ptt_r_i = base64.b64encode(st.session_state['pdf_bytes_ptt_r_i']).decode('utf-8')
                 st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_ptt_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
                 st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
+
