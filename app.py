@@ -1,56 +1,47 @@
-
-import matplotlib.pyplot as plt
-
-from reportlab.platypus import Image as RLImage
 import matplotlib.pyplot as plt
 import io
-
-def render_latex_formula_to_image(latex_str):
-    fig, ax = plt.subplots(figsize=(5, 1))
-    ax.axis("off")
-    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=14, ha='center', va='center')
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2, dpi=200)
-    plt.close(fig)
-    buf.seek(0)
-    return buf
-
-
-def render_latex_formula_to_image(latex_str):
-    fig, ax = plt.subplots(figsize=(5, 1))
-    ax.axis("off")
-    ax.text(0.5, 0.5, f"${latex_str}$", fontsize=14, ha='center', va='center')
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0.2, dpi=200)
-    plt.close(fig)
-    buf.seek(0)
-    return buf
-
-# app.py – Phiên bản đầy đủ: Tính toán điện + Chuyển đổi + Bảo vệ + Công thức điện
-
-# Mắt Nâu – Đội quản lý Điện lực khu vực Định Hóa
-
+from reportlab.platypus import Image as RLImage
+from reportlab.lib.units import inch
+import os
+import hashlib
 import streamlit as st
 import math
 from PIL import Image
 import pandas as pd
-import io
 from datetime import datetime
-import base64 # Import thư viện base64 để mã hóa PDF cho nút xem phiếu
+import base64
 
 # Import các thành phần từ ReportLab để tạo PDF
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# Try to import MathText for LaTeX rendering in PDF
+# Hàm render công thức LaTeX thành ảnh PNG và trả về đường dẫn
+def render_latex_formula_to_image(latex_formula, dpi=300, fontsize=16):
+    """Render công thức LaTeX thành ảnh PNG và trả về đường dẫn."""
+    if not os.path.exists("latex_images"):
+        os.makedirs("latex_images")
+
+    # Tạo hash để lưu ảnh duy nhất
+    img_hash = hashlib.md5(latex_formula.encode('utf-8')).hexdigest()
+    img_path = os.path.join("latex_images", f"{img_hash}.png")
+
+    if not os.path.exists(img_path):
+        fig, ax = plt.subplots(figsize=(6, 1.5)) # Điều chỉnh kích thước hình ảnh để phù hợp với công thức
+        ax.axis("off")
+        ax.text(0.5, 0.5, f"${latex_formula}$", fontsize=fontsize, ha='center', va='center')
+        plt.savefig(img_path, dpi=dpi, bbox_inches="tight", pad_inches=0.3)
+        plt.close(fig)
+
+    return img_path
+
+# Try to import MathText for LaTeX rendering in PDF (kept for warning, but not used for rendering)
 try:
-    
-    MATH_TEXT_AVAILABLE = False
+    from reportlab.platypus.mathtext import MathText # Explicitly import MathText
+    MATH_TEXT_AVAILABLE = True
 except ImportError:
     st.warning("⚠️ Thư viện 'reportlab.platypus.mathtext' không tìm thấy. Công thức LaTeX trong PDF có thể không hiển thị đúng định dạng. Vui lòng đảm bảo ReportLab được cài đặt đầy đủ.")
     MATH_TEXT_AVAILABLE = False
@@ -179,39 +170,24 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
 
     # Công thức và giải thích
     story.append(Paragraph("<b>2. CÔNG THỨC VÀ GIẢI THÍCH</b>", styles['Heading2Style']))
-    story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
-    try:
-        # Tạo ảnh công thức từ matplotlib
-        formula_img_buf = render_latex_formula_to_image(formula_latex)
-        formula_img = Image(formula_img_buf, width=5.5*inch, height=0.8*inch)
-        story.append(formula_img)
-    except Exception as e:
-        story.append(Paragraph(f"(Không hiển thị được công thức LaTeX: {e})", styles['NormalStyle']))
-        story.append(Paragraph(formula_latex, styles['NormalStyle']))
-    story.append(Paragraph(formula_explanation, styles['NormalStyle']))
-    story.append(Spacer(1, 0.2 * inch))
     
-    # Use MathText if available, otherwise fallback to Paragraph
-    if MATH_TEXT_AVAILABLE:
-        # MathText expects the formula to be enclosed in $ or $$.
-        # The formula_latex already has \(...\) which is equivalent to $...$.
-        # We need to remove the \text{} and \quad commands for better MathText parsing
-        # and ensure it's treated as a single mathematical expression.
-        # For multi-line formulas, we can use $$...$$ for display mode.
-        # Let's try to simplify the formula for MathText by removing \text and \quad
-        # and put each formula on a new line if needed, or keep it concise.
-        
-        # Remove \( and \) and replace with $$ for display mode in MathText
-        cleaned_formula_latex = formula_latex.replace(r"\(", "$$").replace(r"\)", "$$")
-        # Remove \text{} and \quad for better MathText compatibility
-        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(1 pha)}", "")
-        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
-        cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc"
-        
-        story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
-        story.append(MathText(cleaned_formula_latex, styles['NormalStyle']))
-    else:
-        story.append(Paragraph(f"Công thức tính: {formula_latex}", styles['NormalStyle']))
+    # Render LaTeX formula to an image and embed it
+    story.append(Paragraph("Công thức tính:", styles['NormalStyle']))
+    
+    # Clean the formula for better image rendering if it contains specific text commands
+    cleaned_formula_latex = formula_latex.replace(r"\quad \text{(1 pha)}", "")
+    cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{(3 pha)}", "")
+    cleaned_formula_latex = cleaned_formula_latex.replace(r"\quad \text{hoặc} \quad", "\n") # New line for "hoặc" in image
+
+    # Render LaTeX formula to an image file and get its path
+    img_path = render_latex_formula_to_image(cleaned_formula_latex)
+    
+    # Create a ReportLab Image object from the image file path
+    # Adjust width and height for optimal display.
+    rl_image = RLImage(img_path, width=4.5*inch, height=1.2*inch) # Set a default reasonable size
+    
+    story.append(rl_image)
+    story.append(Spacer(1, 0.1 * inch)) # Add a small spacer after the image
     
     story.append(Paragraph(formula_explanation, styles['NormalStyle']))
     story.append(Spacer(1, 0.2 * inch))
@@ -273,6 +249,13 @@ def create_pdf(title, formula_latex, formula_explanation, input_params, output_r
     doc.build(story)
     pdf_bytes = buffer.getvalue()
     buffer.close()
+    
+    # Xóa file ảnh tạm sau khi đã tạo PDF
+    try:
+        os.remove(img_path)
+    except OSError as e:
+        st.warning(f"Không thể xóa file ảnh tạm {img_path}: {e}")
+        
     return pdf_bytes
 
 # Xử lý các lựa chọn từ menu chính
@@ -934,10 +917,10 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Đồng):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây đồng.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây đồng.rb", "rb") as f:
+                with open("cadivi_cho bảng tra dây đồng.jpg", "rb") as f: # Changed .rb to .jpg
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Đồng)", use_container_width=True)
             except FileNotFoundError:
-                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây đồng.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây đồng: {e}")
 
@@ -945,10 +928,10 @@ elif main_menu == "Tính toán điện":
             st.markdown("📘 **Tham khảo bảng tra tiết diện dây dẫn của hãng CADIVI (Dây Nhôm):**")
             try:
                 # Đảm bảo file 'cadivi_cho bảng tra dây nhôm.jpg' nằm cùng thư mục với app.py
-                with open("cadivi_cho bảng tra dây nhôm.rb", "rb") as f:
+                with open("cadivi_cho bảng tra dây nhôm.jpg", "rb") as f: # Changed .rb to .jpg
                     st.image(f.read(), caption="Bảng tra dây dẫn CADIVI (Dây Nhôm)", use_container_width=True)
             except FileNotFoundError:
-                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.rb'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
+                st.warning("⚠️ Không tìm thấy file ảnh 'cadivi_cho bảng tra dây nhôm.jpg'. Vui lòng đảm bảo ảnh nằm cùng thư mục với file app.py.")
             except Exception as e:
                 st.error(f"❌ Có lỗi xảy ra khi tải ảnh dây nhôm: {e}")
         
@@ -1336,4 +1319,3 @@ elif main_menu == "Công thức điện":
         i = math.sqrt(ptt / r) if r != 0 else 0
         if st.button("Tính I"):
             st.success(f"I ≈ {i:.3f} A")
-
