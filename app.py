@@ -1772,7 +1772,7 @@ elif main_menu == "Tính toán điện":
         elif nhom == "Trung thế (cấp 22–110kV)":
             st.subheader("⚙️ Tính dòng điện trung thế (tham khảo)")
             cap_dien_ap = st.selectbox("Cấp điện áp trung thế:", ["110 kV", "35 kV", "22 kV", "10 kV"])
-            cong_suat = st.selectbox("Công suất MBA (kVA):", [50, 75, 100, 160, 180, 250, 320, 400, 560, 1000])
+            cong_suat = st.selectbox("Công suất MBA (kVA):", [31.5, 50, 75, 100, 160, 180, 250, 320, 400, 560, 630, 750, 800, 1000, 1250, 2500, 6300, 40000])
             U = 110000 if cap_dien_ap == "110 kV" else 35000 if cap_dien_ap == "35 kV" else 22000 if cap_dien_ap == "22 kV" else 10000
             I = cong_suat * 1000 / (math.sqrt(3) * U)
             he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
@@ -1792,7 +1792,7 @@ elif main_menu == "Tính toán điện":
 
         elif nhom == "Hạ thế (phía 0.4kV)":
             st.subheader("⚙️ Tính dòng điện phía hạ áp 0.4kV")
-            cong_suat = st.selectbox("Công suất MBA (kVA):", [50, 75, 100, 160, 180, 250, 320, 400, 560, 1000])
+            cong_suat = st.selectbox("Công suất MBA (kVA):", [31.5, 50, 75, 100, 160, 180, 250, 320, 400, 560, 630, 750, 800, 1000, 1250, 2500, 6300, 40000])
             U = 400
             I = cong_suat * 1000 / (math.sqrt(3) * U)
             he_so = st.slider("Hệ số an toàn:", 1.0, 2.0, 1.25, 0.05)
