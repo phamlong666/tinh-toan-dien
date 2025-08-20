@@ -2031,3 +2031,104 @@ elif main_menu == "Công thức điện":
                 st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_ptt_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
                 st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
 
+
+elif choice == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN":
+    st.subheader("BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN")
+
+    # Nhập thông tin khách hàng
+    don_vi = st.text_input("Đơn vị (khách hàng) sử dụng điện")
+    dia_chi = st.text_input("Địa chỉ")
+    dia_diem = st.text_input("Địa điểm sử dụng điện")
+    so_dien_thoai = st.text_input("Số điện thoại")
+
+    # Khởi tạo session state cho bảng thiết bị
+    if "table_data" not in st.session_state:
+        st.session_state.table_data = []
+
+    # Form nhập thiết bị
+    with st.form("add_device_form"):
+        col1, col2 = st.columns([2,1])
+        with col1:
+            ten_tb = st.text_input("Tên thiết bị")
+        with col2:
+            so_luong = st.number_input("Số lượng", min_value=1, value=1)
+
+        cong_suat = st.text_input("Công suất (W/BTU/HP...)")
+        tg_ngay = st.number_input("Thời gian sử dụng (giờ/ngày)", min_value=0.0, value=0.0)
+        tg_thang = st.number_input("Thời gian sử dụng (giờ/tháng)", min_value=0.0, value=0.0)
+        tg_nam = st.number_input("Thời gian sử dụng (giờ/năm)", min_value=0.0, value=0.0)
+
+        submitted = st.form_submit_button("➕ Thêm thiết bị")
+        if submitted:
+            st.session_state.table_data.append({
+                "Tên thiết bị": ten_tb,
+                "Số lượng": so_luong,
+                "Công suất": cong_suat,
+                "TG/ngày": tg_ngay,
+                "TG/tháng": tg_thang,
+                "TG/năm": tg_nam
+            })
+
+    if st.button("📌 Cập nhật bảng"):
+        st.success("Bảng đã được cập nhật!")
+
+    # Hiển thị bảng nếu có dữ liệu
+    if st.session_state.table_data:
+        import pandas as pd
+        df = pd.DataFrame(st.session_state.table_data)
+        # Thêm dòng tổng cộng
+        tong = {
+            "Tên thiết bị": "TỔNG CỘNG",
+            "Số lượng": df["Số lượng"].sum(),
+            "Công suất": "",
+            "TG/ngày": df["TG/ngày"].sum(),
+            "TG/tháng": df["TG/tháng"].sum(),
+            "TG/năm": df["TG/năm"].sum()
+        }
+        df = pd.concat([df, pd.DataFrame([tong])], ignore_index=True)
+        st.dataframe(df, use_container_width=True)
+
+        # Xuất Excel
+        import io
+        import pandas as pd
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="BangCongSuat")
+        st.download_button("💾 Xuất Excel", data=output.getvalue(),
+                           file_name="BangCongSuat.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+        # Xuất PDF
+        from reportlab.lib.pagesizes import A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+
+        pdf_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
+        elements = []
+        styles = getSampleStyleSheet()
+
+        # Tiêu đề
+        elements.append(Paragraph("<para align=center><b>BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN</b></para>", styles["Normal"]))
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph(f"Đơn vị (khách hàng): {don_vi}", styles["Normal"]))
+        elements.append(Paragraph(f"Địa chỉ: {dia_chi}", styles["Normal"]))
+        elements.append(Paragraph(f"Địa điểm: {dia_diem}", styles["Normal"]))
+        elements.append(Paragraph(f"Số điện thoại: {so_dien_thoai}", styles["Normal"]))
+        elements.append(Spacer(1, 12))
+
+        # Bảng PDF
+        table_data = [df.columns.to_list()] + df.astype(str).values.tolist()
+        t = Table(table_data, repeatRows=1)
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.grey),
+            ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
+            ("ALIGN", (0,0), (-1,-1), "CENTER"),
+            ("GRID", (0,0), (-1,-1), 1, colors.black),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ]))
+        elements.append(t)
+        doc.build(elements)
+        st.download_button("📄 Xuất PDF", data=pdf_buffer.getvalue(),
+                           file_name="BangCongSuat.pdf", mime="application/pdf")
