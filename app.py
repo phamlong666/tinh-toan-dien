@@ -69,7 +69,7 @@ st.markdown("""
 # Sidebar – chọn chức năng chính
 st.sidebar.subheader("📂 Chọn chức năng")
 # Sử dụng st.radio để tạo các nút lựa chọn riêng biệt
-main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức điện"])
+main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức điện", "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN"])
 
 # Hàm để tải dữ liệu bảng tra từ file Excel
 @st.cache_data # Sử dụng cache để không phải đọc lại file mỗi lần tương tác
@@ -529,10 +529,6 @@ elif main_menu == "Tính toán điện":
                 Q_s_pq = st.number_input("Công suất phản kháng Q (kVAR):", min_value=0.0, key="Q_s_pq")
             
             if st.button("Tính S (từ P, Q)", key="btn_calc_s_pq"):
-                if S_q_ps >= P_q_ps:
-                    Q_result = math.sqrt(S_q_ps**2 - P_q_ps**2)
-                else:
-                    st.warning("Công suất biểu kiến (S) phải lớn hơn hoặc bằng Công suất tác dụng (P).")
                 S_result = math.sqrt(P_s_pq**2 + Q_s_pq**2)
                 st.success(f"Công suất biểu kiến S ≈ {S_result:.2f} kVA")
                 input_params_s = {
@@ -1981,7 +1977,7 @@ elif main_menu == "Công thức điện":
                 st.download_button(label="Xuất PDF", data=st.session_state['pdf_bytes_du_r_i'], file_name=st.session_state['pdf_filename_du_r_i'], mime="application/pdf", key="download_du_r_i_pdf")
             with col_pdf2_du_r_i:
                 pdf_base64_du_r_i = base64.b64encode(st.session_state['pdf_bytes_du_r_i']).decode('utf-8')
-                st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_du_i_r}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
+                st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_du_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
                 st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
 
     elif cong_thuc == "Ptt & R → I":
@@ -2031,3 +2027,139 @@ elif main_menu == "Công thức điện":
                 st.markdown(f"""<a href="data:application/pdf;base64,{pdf_base64_ptt_r_i}" target="_blank" style="text-decoration: none;"><button style="background-color: #007bff;border: none;color: white;padding: 10px 24px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px;margin: 4px 2px;cursor: pointer;border-radius: 8px;">Xem phiếu</button></a>""", unsafe_allow_html=True)
                 st.info("Nhấn 'Xem phiếu' để mở PDF trong tab mới của trình duyệt. Nếu không mở, vui lòng kiểm tra cài đặt trình duyệt hoặc sử dụng nút 'Xuất PDF'.")
 
+elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN":
+    st.subheader("BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN")
+
+    # Nhập thông tin khách hàng
+    don_vi = st.text_input("Đơn vị (khách hàng) sử dụng điện")
+    dia_chi = st.text_input("Địa chỉ")
+    dia_diem = st.text_input("Địa điểm sử dụng điện")
+    so_dien_thoai = st.text_input("Số điện thoại")
+
+    # Danh sách thiết bị có sẵn, thêm tùy chọn "Khác..."
+    ds_thiet_bi = ["Quạt điện", "Ti vi", "Điều hoà", "Quạt sưởi", "Bóng đèn", "Bàn là", "Máy bơm nước", "Tủ lạnh", "Máy giặt", "Lò vi sóng", "Khác..."]
+
+    # Khởi tạo session state cho bảng thiết bị
+    if "table_data" not in st.session_state:
+        st.session_state.table_data = []
+
+    # Form nhập thiết bị
+    with st.form("add_device_form", clear_on_submit=True):
+        col1, col2 = st.columns([2,1])
+        with col1:
+            # Sửa Cột 2: Cho phép chọn hoặc nhập mới
+            ten_tb_chon = st.selectbox("Tên thiết bị sử dụng điện", ds_thiet_bi, index=None, placeholder="Chọn thiết bị có sẵn...")
+            ten_tb_custom = ""
+            if ten_tb_chon == "Khác...":
+                ten_tb_custom = st.text_input("Nhập tên thiết bị khác:", placeholder="Vd: Nồi cơm điện")
+        with col2:
+            so_luong = st.number_input("Số lượng", min_value=1, value=1, step=1)
+
+        cong_suat = st.number_input("Công suất (kW)", min_value=0.0, value=0.0, format="%.2f")
+        tg_ngay = st.number_input("Thời gian sử dụng 1 ngày (giờ)", min_value=0.0, value=0.0)
+        tg_thang = st.number_input("Thời gian sử dụng 1 tháng (ngày)", min_value=0.0, value=0.0)
+        tg_nam = st.number_input("Thời gian sử dụng 1 năm (tháng)", min_value=0.0, value=0.0)
+
+        submitted = st.form_submit_button("➕ Thêm thiết bị")
+        if submitted:
+            # Xác định tên thiết bị cuối cùng
+            ten_tb = ten_tb_custom if ten_tb_chon == "Khác..." else ten_tb_chon
+            
+            if ten_tb: # Chỉ thêm nếu có tên thiết bị
+                tong_cs = so_luong * cong_suat
+                st.session_state.table_data.append({
+                    "STT": len(st.session_state.table_data) + 1,
+                    "Tên thiết bị sử dụng điện": ten_tb,
+                    "Số lượng": so_luong,
+                    # Yêu cầu: Định dạng cột 4, 5 và làm tròn cột 6, 7, 8
+                    "Công suất (kW)": round(cong_suat, 2),
+                    "Tổng công suất (kW)": round(tong_cs, 2),
+                    "TG/ngày (giờ)": round(tg_ngay),
+                    "TG/tháng (ngày)": round(tg_thang),
+                    "TG/năm (tháng)": round(tg_nam)
+                })
+                st.rerun()
+            else:
+                st.warning("Vui lòng chọn hoặc nhập tên thiết bị.")
+
+    if st.session_state.table_data:
+        df = pd.DataFrame(st.session_state.table_data)
+        
+        # Yêu cầu: Tính tổng cột 3, 4, 5
+        tong = {
+            "STT": "",
+            "Tên thiết bị sử dụng điện": "TỔNG CỘNG",
+            "Số lượng": df["Số lượng"].sum(),
+            "Công suất (kW)": df["Công suất (kW)"].sum(),
+            "Tổng công suất (kW)": df["Tổng công suất (kW)"].sum(),
+            "TG/ngày (giờ)": "",
+            "TG/tháng (ngày)": "",
+            "TG/năm (tháng)": ""
+        }
+        
+        df_display = pd.concat([df, pd.DataFrame([tong])], ignore_index=True)
+
+        # Định dạng hiển thị cho st.dataframe
+        st.dataframe(df_display.style.format({
+            "Công suất (kW)": "{:,.2f}",
+            "Tổng công suất (kW)": "{:,.2f}",
+            "TG/ngày (giờ)": "{:.0f}",
+            "TG/tháng (ngày)": "{:.0f}",
+            "TG/năm (tháng)": "{:.0f}",
+        }, na_rep=''), use_container_width=True)
+
+        # Chuẩn bị dữ liệu cho xuất file (đã định dạng)
+        df_export = df_display.copy()
+        for col in ["Công suất (kW)", "Tổng công suất (kW)"]:
+            df_export[col] = pd.to_numeric(df_export[col], errors='coerce').apply(lambda x: '{:,.2f}'.format(x) if pd.notna(x) else '')
+
+        # Xuất Excel
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df_export.to_excel(writer, index=False, sheet_name="BangCongSuat")
+        
+        st.download_button("💾 Xuất Excel", data=output.getvalue(),
+                          file_name="BangCongSuat.xlsx",
+                          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+        # Xuất PDF
+        pdf_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
+        elements = []
+        
+        font_name = 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
+        font_name_bold = 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
+        
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(name='VietnameseTitle', fontName=font_name_bold, fontSize=16, alignment=1, spaceAfter=12))
+        styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6))
+        styles.add(ParagraphStyle(name='VietnameseTableHeader', fontName=font_name_bold, fontSize=8, alignment=1, textColor=colors.whitesmoke))
+        styles.add(ParagraphStyle(name='VietnameseTableCell', fontName=font_name, fontSize=8, alignment=1))
+        
+        elements.append(Paragraph("BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN", styles['VietnameseTitle']))
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph(f"Đơn vị: {don_vi}", styles['VietnameseNormal']))
+        elements.append(Paragraph(f"Địa chỉ: {dia_chi}", styles['VietnameseNormal']))
+        elements.append(Paragraph(f"Địa điểm: {dia_diem}", styles['VietnameseNormal']))
+        elements.append(Paragraph(f"Số điện thoại: {so_dien_thoai}", styles['VietnameseNormal']))
+        elements.append(Spacer(1, 12))
+        
+        header = [Paragraph(col, styles['VietnameseTableHeader']) for col in df_export.columns.tolist()]
+        data = [[Paragraph(str(item), styles['VietnameseTableCell']) for item in row] for row in df_export.values.tolist()]
+        
+        table_data = [header] + data
+        t = Table(table_data, repeatRows=1)
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.grey),
+            ('ALIGN', (0,0), (-1,-1), "CENTER"),
+            ('VALIGN', (0,0), (-1,-1), "MIDDLE"),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('TOPPADDING', (0,0), (-1,-1), 5),
+        ]))
+        
+        elements.append(t)
+        doc.build(elements)
+        
+        st.download_button("📄 Xuất PDF", data=pdf_buffer.getvalue(),
+                          file_name="BangCongSuat.pdf", mime="application/pdf")
