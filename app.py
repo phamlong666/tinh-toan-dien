@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from reportlab.platypus import Image as RLImage
 import matplotlib.pyplot as plt
 import io
+import numpy as np
 
 def render_latex_formula_to_image(latex_str):
     """
@@ -2082,84 +2083,85 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
             else:
                 st.warning("Vui lòng chọn hoặc nhập tên thiết bị.")
 
-    if st.session_state.table_data:
-        df = pd.DataFrame(st.session_state.table_data)
-        
-        # Yêu cầu: Tính tổng cột 3, 4, 5
-        tong = {
-            "STT": "",
-            "Tên thiết bị sử dụng điện": "TỔNG CỘNG",
-            "Số lượng": df["Số lượng"].sum(),
-            "Công suất (kW)": df["Công suất (kW)"].sum(),
-            "Tổng công suất (kW)": df["Tổng công suất (kW)"].sum(),
-            "TG/ngày (giờ)": "",
-            "TG/tháng (ngày)": "",
-            "TG/năm (tháng)": ""
-        }
-        
-        df_display = pd.concat([df, pd.DataFrame([tong])], ignore_index=True)
+    # THAY THẾ TOÀN BỘ ĐOẠN MÃ NÀY
+if st.session_state.table_data:
+    df = pd.DataFrame(st.session_state.table_data)
+    
+    # SỬA LỖI: Thay thế "" bằng np.nan cho các ô tổng không cần tính
+    tong = {
+        "STT": "",
+        "Tên thiết bị sử dụng điện": "TỔNG CỘNG",
+        "Số lượng": df["Số lượng"].sum(),
+        "Công suất (kW)": df["Công suất (kW)"].sum(),
+        "Tổng công suất (kW)": df["Tổng công suất (kW)"].sum(),
+        "TG/ngày (giờ)": np.nan, # Sửa ở đây
+        "TG/tháng (ngày)": np.nan, # Sửa ở đây
+        "TG/năm (tháng)": np.nan # Sửa ở đây
+    }
+    
+    df_display = pd.concat([df, pd.DataFrame([tong])], ignore_index=True)
 
-        # Định dạng hiển thị cho st.dataframe
-        st.dataframe(df_display.style.format({
-            "Công suất (kW)": "{:,.2f}",
-            "Tổng công suất (kW)": "{:,.2f}",
-            "TG/ngày (giờ)": "{:.0f}",
-            "TG/tháng (ngày)": "{:.0f}",
-            "TG/năm (tháng)": "{:.0f}",
-        }, na_rep=''), use_container_width=True)
+    # Dòng st.dataframe này giờ sẽ hoạt động chính xác
+    st.dataframe(df_display.style.format({
+        "Công suất (kW)": "{:,.2f}",
+        "Tổng công suất (kW)": "{:,.2f}",
+        "TG/ngày (giờ)": "{:.0f}",
+        "TG/tháng (ngày)": "{:.0f}",
+        "TG/năm (tháng)": "{:.0f}",
+    }, na_rep=''), use_container_width=True)
 
-        # Chuẩn bị dữ liệu cho xuất file (đã định dạng)
-        df_export = df_display.copy()
-        for col in ["Công suất (kW)", "Tổng công suất (kW)"]:
-            df_export[col] = pd.to_numeric(df_export[col], errors='coerce').apply(lambda x: '{:,.2f}'.format(x) if pd.notna(x) else '')
+    # Chuẩn bị dữ liệu cho xuất file (đã định dạng)
+    df_export = df_display.copy()
+    for col in ["Công suất (kW)", "Tổng công suất (kW)"]:
+        df_export[col] = pd.to_numeric(df_export[col], errors='coerce').apply(lambda x: '{:,.2f}'.format(x) if pd.notna(x) else '')
 
-        # Xuất Excel
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            df_export.to_excel(writer, index=False, sheet_name="BangCongSuat")
-        
-        st.download_button("💾 Xuất Excel", data=output.getvalue(),
-                          file_name="BangCongSuat.xlsx",
-                          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    # Xuất Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df_export.to_excel(writer, index=False, sheet_name="BangCongSuat")
+    
+    st.download_button("💾 Xuất Excel", data=output.getvalue(),
+                      file_name="BangCongSuat.xlsx",
+                      mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-        # Xuất PDF
-        pdf_buffer = io.BytesIO()
-        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
-        elements = []
-        
-        font_name = 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
-        font_name_bold = 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
-        
-        styles = getSampleStyleSheet()
-        styles.add(ParagraphStyle(name='VietnameseTitle', fontName=font_name_bold, fontSize=16, alignment=1, spaceAfter=12))
-        styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6))
-        styles.add(ParagraphStyle(name='VietnameseTableHeader', fontName=font_name_bold, fontSize=8, alignment=1, textColor=colors.whitesmoke))
-        styles.add(ParagraphStyle(name='VietnameseTableCell', fontName=font_name, fontSize=8, alignment=1))
-        
-        elements.append(Paragraph("BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN", styles['VietnameseTitle']))
-        elements.append(Spacer(1, 12))
-        elements.append(Paragraph(f"Đơn vị: {don_vi}", styles['VietnameseNormal']))
-        elements.append(Paragraph(f"Địa chỉ: {dia_chi}", styles['VietnameseNormal']))
-        elements.append(Paragraph(f"Địa điểm: {dia_diem}", styles['VietnameseNormal']))
-        elements.append(Paragraph(f"Số điện thoại: {so_dien_thoai}", styles['VietnameseNormal']))
-        elements.append(Spacer(1, 12))
-        
-        header = [Paragraph(col, styles['VietnameseTableHeader']) for col in df_export.columns.tolist()]
-        data = [[Paragraph(str(item), styles['VietnameseTableCell']) for item in row] for row in df_export.values.tolist()]
-        
-        table_data = [header] + data
-        t = Table(table_data, repeatRows=1)
-        t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.grey),
-            ('ALIGN', (0,0), (-1,-1), "CENTER"),
-            ('VALIGN', (0,0), (-1,-1), "MIDDLE"),
-            ('GRID', (0,0), (-1,-1), 1, colors.black),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
-            ('TOPPADDING', (0,0), (-1,-1), 5),
-        ]))
-        
-        elements.append(t)
-        doc.build(elements)
-        
-        st.download_button("📄 Xuất PDF", data=pdf_buffer.getvalue(),
-                          file_name="BangCongSuat.pdf", mime="application/pdf")
+    # Xuất PDF
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    elements = []
+    
+    font_name = 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
+    font_name_bold = 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
+    
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='VietnameseTitle', fontName=font_name_bold, fontSize=16, alignment=1, spaceAfter=12))
+    styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6))
+    styles.add(ParagraphStyle(name='VietnameseTableHeader', fontName=font_name_bold, fontSize=8, alignment=1, textColor=colors.whitespoke))
+    styles.add(ParagraphStyle(name='VietnameseTableCell', fontName=font_name, fontSize=8, alignment=1))
+    
+    elements.append(Paragraph("BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN", styles['VietnameseTitle']))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph(f"Đơn vị: {don_vi}", styles['VietnameseNormal']))
+    elements.append(Paragraph(f"Địa chỉ: {dia_chi}", styles['VietnameseNormal']))
+    elements.append(Paragraph(f"Địa điểm: {dia_diem}", styles['VietnameseNormal']))
+    elements.append(Paragraph(f"Số điện thoại: {so_dien_thoai}", styles['VietnameseNormal']))
+    elements.append(Spacer(1, 12))
+    
+    header = [Paragraph(col, styles['VietnameseTableHeader']) for col in df_export.columns.tolist()]
+    data = [[Paragraph(str(item), styles['VietnameseTableCell']) for item in row] for row in df_export.values.tolist()]
+    
+    table_data = [header] + data
+    t = Table(table_data, repeatRows=1)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('ALIGN', (0,0), (-1,-1), "CENTER"),
+        ('VALIGN', (0,0), (-1,-1), "MIDDLE"),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
+    
+    st.download_button("📄 Xuất PDF", data=pdf_buffer.getvalue(),
+                      file_name="BangCongSuat.pdf", mime="application/pdf")
