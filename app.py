@@ -2069,10 +2069,6 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
                     "Số lượng": so_luong,
                     "Công suất (kW)": round(cong_suat, 2),
                     "Tổng công suất (kW)": round(tong_cs, 2),
-                    # Các cột thời gian tạm ẩn để form gọn hơn, nếu cần bạn có thể bỏ comment
-                    # "TG/ngày (giờ)": 0,
-                    # "TG/tháng (ngày)": 0,
-                    # "TG/năm (tháng)": 0
                 })
             else:
                 st.warning("Vui lòng chọn hoặc nhập tên thiết bị.")
@@ -2136,7 +2132,7 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
         
         styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name='VietnameseTitle', fontName=font_name_bold, fontSize=14, alignment=1, spaceAfter=12))
-        styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6))
+        styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6, alignment=1))
         styles.add(ParagraphStyle(name='VietnameseTableHeader', fontName=font_name_bold, fontSize=9, alignment=1, textColor=colors.whitesmoke))
         styles.add(ParagraphStyle(name='VietnameseTableCell', fontName=font_name, fontSize=9, alignment=1))
         styles.add(ParagraphStyle(name='Signature', fontName=font_name_bold, fontSize=11, alignment=1))
@@ -2151,14 +2147,14 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
         
         # Tạo bảng cho PDF
         df_pdf = df.copy()
-        df_pdf.rename(columns={
+        df_pdf_renamed = df_pdf.rename(columns={
             "Tên thiết bị sử dụng điện": "Tên thiết bị",
             "Số lượng": "SL",
             "Công suất (kW)": "Công suất (kW)",
             "Tổng công suất (kW)": "Tổng CS (kW)"
-        }, inplace=True)
+        })
         
-        table_data = [list(df_pdf.columns)] + df_pdf.values.tolist()
+        table_data = [list(df_pdf_renamed.columns)] + df_pdf_renamed.values.tolist()
         table_data.append(["TỔNG CỘNG", "", total_qty, f"{total_power:.2f}", f"{total_sum_power:.2f}"])
         
         t = Table(table_data, repeatRows=1, colWidths=[doc.width*x for x in [0.1, 0.45, 0.1, 0.17, 0.18]])
@@ -2175,11 +2171,11 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
         ]))
         elements.append(t)
         
-        # SỬA LỖI: Thêm phần chữ ký vào PDF
         elements.append(Spacer(1, 36))
+        # SỬA LỖI: Thay thế 'NormalStyle' bằng 'VietnameseNormal'
         signature_data = [
             [Paragraph("NGƯỜI KHẢO SÁT", styles['Signature']), Paragraph("ĐƠN VỊ (KHÁCH HÀNG) SỬ DỤNG ĐIỆN", styles['Signature'])],
-            [Paragraph("(Ký, ghi rõ họ tên)", styles['NormalStyle']), Paragraph("(Ký, ghi rõ họ tên)", styles['NormalStyle'])],
+            [Paragraph("(Ký, ghi rõ họ tên)", styles['VietnameseNormal']), Paragraph("(Ký, ghi rõ họ tên)", styles['VietnameseNormal'])],
             [Spacer(1, 72), Spacer(1, 72)],
             ["", Paragraph(f"<b>{don_vi}</b>", styles['Signature'])]
         ]
