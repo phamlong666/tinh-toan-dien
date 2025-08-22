@@ -2047,6 +2047,7 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
 
     with st.form("add_device_form", clear_on_submit=True):
         st.write("**Thêm thiết bị mới**")
+        
         c1, c2, c3 = st.columns([2,1,1])
         with c1:
             ten_tb_chon = st.selectbox("Tên thiết bị", ds_thiet_bi, index=None, placeholder="Chọn hoặc nhập...")
@@ -2058,6 +2059,14 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
         with c3:
             cong_suat = st.number_input("Công suất (kW)", min_value=0.0, value=0.0, format="%.2f")
         
+        c4, c5, c6 = st.columns(3)
+        with c4:
+            tg_ngay = st.number_input("TG/ngày (giờ)", min_value=0, value=0, step=1)
+        with c5:
+            tg_thang = st.number_input("TG/tháng (ngày)", min_value=0, value=0, step=1)
+        with c6:
+            tg_nam = st.number_input("TG/năm (tháng)", min_value=0, value=0, step=1)
+
         submitted = st.form_submit_button("➕ Thêm vào bảng")
         if submitted:
             ten_tb = ten_tb_custom if ten_tb_chon == "Khác..." else ten_tb_chon
@@ -2069,6 +2078,9 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
                     "Số lượng": so_luong,
                     "Công suất (kW)": round(cong_suat, 2),
                     "Tổng công suất (kW)": round(tong_cs, 2),
+                    "TG/ngày (giờ)": tg_ngay,
+                    "TG/tháng (ngày)": tg_thang,
+                    "TG/năm (tháng)": tg_nam
                 })
             else:
                 st.warning("Vui lòng chọn hoặc nhập tên thiết bị.")
@@ -2085,57 +2097,56 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
             item['STT'] = i + 1
 
     if st.session_state.table_data:
-        # Header của bảng
-        cols = st.columns([1, 8, 2, 3, 3])
-        header_fields = ["Chọn", "Tên thiết bị", "SL", "Công suất (kW)", "Tổng CS (kW)"]
+        cols = st.columns([1, 5, 2, 2, 2, 2, 2, 2])
+        header_fields = ["Chọn", "Tên thiết bị", "SL", "CS (kW)", "Tổng CS", "TG/Ngày", "TG/Tháng", "TG/Năm"]
         for col, field in zip(cols, header_fields):
             col.markdown(f"**{field}**")
 
-        # Dữ liệu và checkbox
         indices_to_delete = []
         for index, item in enumerate(st.session_state.table_data):
-            c1, c2, c3, c4, c5 = st.columns([1, 8, 2, 3, 3])
+            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([1, 5, 2, 2, 2, 2, 2, 2])
             if c1.checkbox("", key=f"del_{index}"):
                 indices_to_delete.append(index)
             c2.write(item["Tên thiết bị sử dụng điện"])
             c3.write(item["Số lượng"])
             c4.write(f"{item['Công suất (kW)']:.2f}")
             c5.write(f"{item['Tổng công suất (kW)']:.2f}")
+            c6.write(item["TG/ngày (giờ)"])
+            c7.write(item["TG/tháng (ngày)"])
+            c8.write(item["TG/năm (tháng)"])
 
-        # Nút xóa chỉ hiện khi có mục được chọn
         if indices_to_delete:
             st.button("🗑️ Xóa các mục đã chọn", on_click=delete_selected_rows, args=(indices_to_delete,), type="primary")
 
         st.markdown("---")
         
-        # Dòng TỔNG CỘNG
         df = pd.DataFrame(st.session_state.table_data)
         total_qty = df["Số lượng"].sum()
         total_power = df["Công suất (kW)"].sum()
         total_sum_power = df["Tổng công suất (kW)"].sum()
         
-        c1, c2, c3, c4, c5 = st.columns([1, 8, 2, 3, 3])
-        c2.markdown("**TỔNG CỘNG**")
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([1, 5, 2, 2, 2, 2, 2, 2])
+        # SỬA LỖI: Căn lề phải chữ "TỔNG CỘNG"
+        c2.markdown("<div style='text-align: right;'><b>TỔNG CỘNG</b></div>", unsafe_allow_html=True)
         c3.markdown(f"**{total_qty}**")
         c4.markdown(f"**{total_power:.2f}**")
         c5.markdown(f"**{total_sum_power:.2f}**")
         
-        # --- Các nút xuất file ---
         col1_btn, col2_btn, col3_btn = st.columns(3)
         
-        # Chuẩn bị dữ liệu PDF
         pdf_buffer = io.BytesIO()
-        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, leftMargin=0.75*inch, rightMargin=0.75*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
         
         font_name = 'DejaVuSans' if 'DejaVuSans' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
         font_name_bold = 'DejaVuSans-Bold' if 'DejaVuSans-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
         
         styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name='VietnameseTitle', fontName=font_name_bold, fontSize=14, alignment=1, spaceAfter=12))
-        styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6, alignment=1))
-        styles.add(ParagraphStyle(name='VietnameseTableHeader', fontName=font_name_bold, fontSize=9, alignment=1, textColor=colors.whitesmoke))
-        styles.add(ParagraphStyle(name='VietnameseTableCell', fontName=font_name, fontSize=9, alignment=1))
+        styles.add(ParagraphStyle(name='VietnameseNormal', fontName=font_name, fontSize=11, spaceAfter=6, alignment=0)) 
+        styles.add(ParagraphStyle(name='VietnameseTableHeader', fontName=font_name_bold, fontSize=8, alignment=1, textColor=colors.whitesmoke))
+        styles.add(ParagraphStyle(name='VietnameseTableCell', fontName=font_name, fontSize=8, alignment=1))
         styles.add(ParagraphStyle(name='Signature', fontName=font_name_bold, fontSize=11, alignment=1))
+        styles.add(ParagraphStyle(name='SignatureSub', fontName=font_name, fontSize=11, alignment=1))
 
         elements = []
         elements.append(Paragraph("BẢNG LIỆT KÊ CÔNG SUẤT THIẾT BỊ SỬ DỤNG ĐIỆN", styles['VietnameseTitle']))
@@ -2143,49 +2154,48 @@ elif main_menu == "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ D�
         elements.append(Paragraph(f"<b>Đơn vị sử dụng điện:</b> {don_vi}", styles['VietnameseNormal']))
         elements.append(Paragraph(f"<b>Địa chỉ:</b> {dia_chi}", styles['VietnameseNormal']))
         elements.append(Paragraph(f"<b>Địa điểm sử dụng điện:</b> {dia_diem}", styles['VietnameseNormal']))
+        elements.append(Paragraph(f"<b>Điện thoại:</b> {so_dien_thoai}", styles['VietnameseNormal']))
         elements.append(Spacer(1, 12))
         
-        # Tạo bảng cho PDF
         df_pdf = df.copy()
         df_pdf_renamed = df_pdf.rename(columns={
-            "Tên thiết bị sử dụng điện": "Tên thiết bị",
-            "Số lượng": "SL",
-            "Công suất (kW)": "Công suất (kW)",
-            "Tổng công suất (kW)": "Tổng CS (kW)"
+            "Tên thiết bị sử dụng điện": "Tên thiết bị", "Số lượng": "SL",
+            "Công suất (kW)": "CS (kW)", "Tổng công suất (kW)": "Tổng CS (kW)",
+            "TG/ngày (giờ)": "TG/Ngày", "TG/tháng (ngày)": "TG/Tháng", "TG/năm (tháng)": "TG/Năm"
         })
         
         table_data = [list(df_pdf_renamed.columns)] + df_pdf_renamed.values.tolist()
-        table_data.append(["TỔNG CỘNG", "", total_qty, f"{total_power:.2f}", f"{total_sum_power:.2f}"])
+        # SỬA LỖI: Đặt "TỔNG CỘNG" vào đúng cột "Tên thiết bị"
+        table_data.append(["", "TỔNG CỘNG", total_qty, f"{total_power:.2f}", f"{total_sum_power:.2f}", "", "", ""])
         
-        t = Table(table_data, repeatRows=1, colWidths=[doc.width*x for x in [0.1, 0.45, 0.1, 0.17, 0.18]])
+        t = Table(table_data, repeatRows=1)
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.grey),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-            ('FONTNAME', (0,0), (-1,0), font_name_bold),
-            ('FONTNAME', (0,1), (-1,-1), font_name),
-            ('ALIGN', (0,0), (-1,-1), "CENTER"),
-            ('VALIGN', (0,0), (-1,-1), "MIDDLE"),
+            ('BACKGROUND', (0,0), (-1,0), colors.grey), ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('FONTNAME', (0,0), (-1,0), font_name_bold), ('FONTNAME', (0,1), (-1,-1), font_name),
+            ('ALIGN', (0,0), (-1,-1), "CENTER"), ('VALIGN', (0,0), (-1,-1), "MIDDLE"),
             ('GRID', (0,0), (-1,-1), 1, colors.black),
-            ('BACKGROUND', (-1,-1), (0,-1), colors.lightgrey),
-            ('FONTNAME', (0,-1), (-1,-1), font_name_bold),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey), ('FONTNAME', (0,-1), (-1,-1), font_name_bold),
+            ('ALIGN', (1,0), (1,-2), 'LEFT'), # Căn trái cột Tên thiết bị (trừ dòng tổng)
+            ('ALIGN', (1,-1), (1,-1), 'RIGHT'), # Căn phải ô TỔNG CỘNG
         ]))
         elements.append(t)
         
-        elements.append(Spacer(1, 36))
-        # SỬA LỖI: Thay thế 'NormalStyle' bằng 'VietnameseNormal'
+        elements.append(Spacer(1, 24))
+        # SỬA LỖI: Thêm ngày tháng năm tự động
+        location_date_str = f".........., {datetime.now().strftime('ngày %d tháng %m năm %Y')}"
         signature_data = [
+            ['', Paragraph(location_date_str, styles['SignatureSub'])],
             [Paragraph("NGƯỜI KHẢO SÁT", styles['Signature']), Paragraph("ĐƠN VỊ (KHÁCH HÀNG) SỬ DỤNG ĐIỆN", styles['Signature'])],
-            [Paragraph("(Ký, ghi rõ họ tên)", styles['VietnameseNormal']), Paragraph("(Ký, ghi rõ họ tên)", styles['VietnameseNormal'])],
+            [Paragraph("(Ký, ghi rõ họ tên)", styles['SignatureSub']), Paragraph("(Ký, ghi rõ họ tên)", styles['SignatureSub'])],
             [Spacer(1, 72), Spacer(1, 72)],
             ["", Paragraph(f"<b>{don_vi}</b>", styles['Signature'])]
         ]
-        sig_table = Table(signature_data, colWidths=[doc.width/2, doc.width/2])
+        sig_table = Table(signature_data, colWidths=[doc.width*0.4, doc.width*0.6])
         sig_table.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
         elements.append(sig_table)
         
         doc.build(elements)
 
-        # Hiển thị các nút
         with col1_btn:
             df_export = df.copy()
             excel_buffer = io.BytesIO()
