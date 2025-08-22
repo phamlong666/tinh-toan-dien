@@ -71,6 +71,31 @@ st.markdown("""
 st.sidebar.subheader("📂 Chọn chức năng")
 # Sử dụng st.radio để tạo các nút lựa chọn riêng biệt
 main_menu = st.sidebar.radio("", ["Trang chủ", "Tính toán điện", "Chuyển đổi đơn vị", "Công thức điện", "📋 BẢNG LIỆT KÊ CÔNG SUẤT CÁC THIẾT BỊ SỬ DỤNG ĐIỆN"])
+# --- Khung quảng cáo ---
+st.sidebar.markdown(
+    """
+    <div style="border:2px solid red; border-radius:10px; padding:10px; margin-bottom:15px; background-color:#fff7f7;">
+        <h3 style="color:red; text-align:center;">📢 Liên hệ quảng cáo</h3>
+        <p style="font-size:18px; text-align:center; color:black;">☎ 0915.644.666</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- Khung video kỹ thuật điện ---
+st.sidebar.markdown(
+    """
+    <div style="border:2px solid #0066cc; border-radius:10px; padding:10px; background-color:#f0f8ff;">
+        <h3 style="color:#0066cc; text-align:center;">🎥 Video kỹ thuật điện</h3>
+        <iframe width="100%" height="200"
+        src="https://www.youtube.com/embed/bSB7JhLBfGU?autoplay=1&mute=1&loop=1"
+        frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+        </iframe>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # Hàm để tải dữ liệu bảng tra từ file Excel
 @st.cache_data # Sử dụng cache để không phải đọc lại file mỗi lần tương tác
